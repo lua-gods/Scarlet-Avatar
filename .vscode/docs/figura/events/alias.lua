@@ -128,7 +128,7 @@
 ---| "VOICE"   # Voice/Speech
 
 ---@alias Event.OnPlaySound.func
----| fun(id?: string, pos?: Vector3, volume?: number, pitch?: number, loop?: boolean, category?: Event.OnPlaySound.category, path?: string)
+---| fun(id?: string, pos?: Vector3, volume?: number, pitch?: number, loop?: boolean, category?: Event.OnPlaySound.category, path?: string): boolean?
 
 
 ---==================================================================================================================---

@@ -20,7 +20,7 @@ end
 
 action_wheel:setPage(root)
 
-models.sl.Torso.Hed.Hat.top.item:newItem("Feather"):setItem("minecraft:feather"):scale(0.5):rot(90,180,0):pos(2,0,-3)
+models.hat.hat.top.item:newItem("Feather"):setItem("minecraft:feather"):scale(0.5):rot(90,180,0):pos(2,0,-3)
 
 local eye_height = 22 / 16
 local body_size = 0.9

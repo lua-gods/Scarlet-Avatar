@@ -21,7 +21,6 @@ local bhis = {}
 
 local config = {
    parts = {
-      {group=models.sl.Torso.Hed.Hat.top,type="top",physics_type="head",intensity=vec(1,1,1),delay=0},
       {group=models.sl.Torso.Hed.hair1,type="front",physics_type="head",intensity=vec(0.25,0,0.5),delay=0},
       {group=models.sl.Torso.Hed.hair2,type="front",physics_type="head",intensity=vec(0.25,0,0.5),delay=1},
       {group=models.sl.Torso.Boby.tie,type="front",intensity=0.5,delay=0},

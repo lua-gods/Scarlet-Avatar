@@ -70,10 +70,10 @@ end
 
 events.RENDER:register(function (delta, context)
    local t = client:getSystemTime() / 1000
-   local true_rot = -math.lerp(last_rot,rot,delta)
+   local true_rot = -math.lerp(last_rot,rot,delta) --[[@type Vector3]]
    local true_distance_traveled = math.lerp(last_distance_traveled,distance_traved,delta)
-   local true_rel_vel = math.lerp(last_rel_vel,rel_vel,delta)
-   local true_grounded = math.lerp(last_grounded,grounded,delta)
+   local true_rel_vel = math.lerp(last_rel_vel,rel_vel,delta)--[[@type Vector3]]
+   local true_grounded = math.lerp(last_grounded,grounded,delta) 
    local sin = math.sin(true_distance_traveled*3)*math.min(math.abs(true_rel_vel.z * 3),1)* true_grounded
    local sin2 = math.sin(true_distance_traveled*6)*math.min(math.abs(true_rel_vel.z * 3),1)* true_grounded
    local cos = math.cos(true_distance_traveled*3)*math.min(math.abs(true_rel_vel.z * 3),1)* true_grounded

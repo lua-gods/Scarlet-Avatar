@@ -1,0 +1,50 @@
+local tween = require("libraries.GNTweenLib")
+
+models.disco:setParentType("WORLD")
+models.disco.glow:setPrimaryRenderType("EMISSIVE")
+local i = 0
+events.ON_PLAY_SOUND:register(function (id, pos, volume, pitch, loop, category, path)
+   if id == "minecraft:entity.generic.eat" then
+      i = i % 3 + 1
+      sounds:playSound("sounds.nom"..i,pos,0.2,1)
+      return true
+   elseif id == "minecraft:entity.generic.full" then
+      return true
+   elseif id == "minecraft:entity.player.hurt" then
+      sounds:playSound("sounds.oof",pos,1,0.5)
+      return true
+   elseif id == "minecraft:block.sculk_shrieker.shriek" then
+      models.disco:setVisible(true)
+      for key, value in pairs(models.disco.glow:getChildren()) do
+         local r1,r2,r3
+         math.randomseed(client:getSystemTime()+key*2412)
+         r1 = math.random()
+         math.randomseed(client:getSystemTime()+key*5351)
+         r2 = math.random()
+         math.randomseed(client:getSystemTime()+key*21351)
+         r3 = math.random()
+         value:setColor(vectors.vec3(r1,r2,r3):normalize())
+      end
+      local d = 13.5
+      tween.tweenFunction(4,"outQuad",function (y)
+         models.disco:setPos((pos + vectors.vec3(0,y*3,0)) * 16)
+      end)
+      tween.tweenFunction(d,"inQuad",function (y)
+         models.disco:setRot(0,y*180*d,0)
+         
+      end,function ()
+         models.disco:setVisible(false)
+      end,"disco")
+      tween.tweenFunction(d-1,"linear",function (y)
+         local s = math.min(y * d, 1)
+         models.disco:setScale(s,s,s)
+      end,function ()
+         tween.tweenFunction(1,"inBack",function (y)
+            y = 1 - y
+            models.disco:setScale(y,y,y)
+         end,nil,"disca")
+      end)
+      sounds:playSound("sounds.hey",pos,1,1)
+      return true
+   end
+end)

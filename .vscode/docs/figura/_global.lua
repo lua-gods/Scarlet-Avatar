@@ -1,5 +1,5 @@
 ---@meta _
----@diagnostic disable: duplicate-set-field
+---@diagnostic disable
 
 
 ---==============================================================================================---
@@ -23,6 +23,9 @@ config = {}
 
 ---@type EventsAPI
 events = {}
+
+---@type RaycastAPI
+raycast = {}
 
 ---A table containing all metatables used by Figura.
 ---
@@ -1766,7 +1769,6 @@ particles = {}
 ---├•  end                                   │   end
 ---└•end                                     └•end
 ---```
----@type {[string]?: function}
 pings = {}
 
 ---The Minecraft player the current avatar is attached to.
@@ -1797,6 +1799,8 @@ vectors = {}
 ---@type WorldAPI
 world = {}
 
+_GS = _G
+
 
 ---==============================================================================================---
 ---  FUNCTIONS                                                                                   ---
@@ -1823,7 +1827,7 @@ function listFiles(dir, recursive) end
 ---> * `boolean`: Purple,
 ---> * `number`: Cyan,
 ---> * `function`: Green,
----> * `table`: Pink,
+---> * `table`: Blue,
 ---> * `userdata`: Yellow.
 ---> ***
 ---@param ... any
