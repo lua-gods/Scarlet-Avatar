@@ -68,7 +68,12 @@ for key, value in pairs(verts) do
    end
 end
 
+models.sl.Torso.Hed.Glass:setPrimaryRenderType("EMISSIVE"):setColor(0.4,0.4,0.4)
 events.RENDER:register(function (delta, context)
+   if not player:isLoaded() then
+      return
+   end
+   
    local t = client:getSystemTime() / 1000
    local true_rot = -math.lerp(last_rot,rot,delta) --[[@type Vector3]]
    local true_distance_traveled = math.lerp(last_distance_traveled,distance_traved,delta)
@@ -79,6 +84,14 @@ events.RENDER:register(function (delta, context)
    local cos = math.cos(true_distance_traveled*3)*math.min(math.abs(true_rel_vel.z * 3),1)* true_grounded
    local true_sus = math.lerp(last_sus,sus,delta)
    local duck = math.min(true_sus*16,0)
+
+   local mat = matrices.mat3()
+   local crot = client:getCameraPos()-player:getPos()
+   mat
+   :rotateZ(16)
+   :translate(0,-crot.y + math.atan2(crot.z,crot.x) + true_rot.x / 90)
+   models.sl.Torso.Hed.Glass:setUVMatrix(mat)
+
 
    local speed = math.clamp(true_rel_vel.z,-0.5,0.5)
    
