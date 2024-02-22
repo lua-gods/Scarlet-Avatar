@@ -6,7 +6,7 @@ local datas = {}
 
 local players = {}
 
-events.TICK:register(function()
+events.WORLD_TICK:register(function()
    players = world.getPlayers()
    for key, player in pairs(players) do
       local uuid = player:getUUID()
