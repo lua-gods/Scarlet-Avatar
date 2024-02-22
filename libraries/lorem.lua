@@ -1,0 +1,2 @@
+return [=[
+   Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce eget nisl sollicitudin, sagittis ex non, ultrices sem. In hac habitasse platea dictumst. Aenean id quam eget urna scelerisque posuere a id massa. Cras nec erat dui. Cras finibus tellus massa, nec hendrerit diam pellentesque non. Nunc in mattis purus. Nullam convallis sem id tortor imperdiet, quis commodo orci rutrum. Suspendisse et suscipit diam. Donec aliquet accumsan velit in posuere. Ut feugiat sollicitudin sapien, sed maximus massa tincidunt quis.]=]
