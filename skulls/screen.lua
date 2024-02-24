@@ -3,13 +3,82 @@ local http = require("libraries.http")
 local tween = require("libraries.GNTweenLib")
 local bg = gnui.newSprite():setTexture(textures:newTexture("1x1black",1,1):setPixel(0,0,vectors.vec3(0,0,0))):setUV(1,0)
 
+local httpErrors = {
+   [100] = "Continue",
+   [101] = "Switching Protocols",
+   [102] = "Processing",
+   [103] = "Early Hints",
+   [200] = "OK",
+   [201] = "Created",
+   [202] = "Accepted",
+   [203] = "Non-Authoritative Information",
+   [204] = "No Content",
+   [205] = "Reset Content",
+   [206] = "Partial Content",
+   [207] = "Multi-Status",
+   [208] = "Already Reported",
+   [226] = "IM Used",
+   [300] = "Multiple Choices",
+   [301] = "Moved Permanently",
+   [302] = "Found",
+   [303] = "See Other",
+   [304] = "Not Modified",
+   [305] = "Use Proxy",
+   [307] = "Temporary Redirect",
+   [308] = "Permanent Redirect",
+   [400] = "Bad Request",
+   [401] = "Unauthorized",
+   [402] = "Payment Required",
+   [403] = "Forbidden",
+   [404] = "Not Found",
+   [405] = "Method Not Allowed",
+   [406] = "Not Acceptable",
+   [407] = "Proxy Authentication Required",
+   [408] = "Request Timeout",
+   [409] = "Conflict",
+   [410] = "Gone",
+   [411] = "Length Required",
+   [412] = "Precondition Failed",
+   [413] = "Payload Too Large",
+   [414] = "URI Too Long",
+   [415] = "Unsupported Media Type",
+   [416] = "Range Not Satisfiable",
+   [417] = "Expectation Failed",
+   [418] = "I'm a teapot",
+   [421] = "Misdirected Request",
+   [422] = "Unprocessable Entity",
+   [423] = "Locked",
+   [424] = "Failed Dependency",
+   [425] = "Too Early",
+   [426] = "Upgrade Required",
+   [428] = "Precondition Required",
+   [429] = "Too Many Requests",
+   [431] = "Request Header Fields Too Large",
+   [451] = "Unavailable For Legal Reasons",
+   [500] = "Internal Server Error",
+   [501] = "Not Implemented",
+   [502] = "Bad Gateway",
+   [503] = "Service Unavailable",
+   [504] = "Gateway Timeout",
+   [505] = "HTTP Version Not Supported",
+   [506] = "Variant Also Negotiates",
+   [507] = "Insufficient Storage",
+   [508] = "Loop Detected",
+   [510] = "Not Extended",
+   [511] = "Network Authentication Required",
+}
+
+local errr
+
 local wallpaper_ready = false
-http.get("https://media.discordapp.net/attachments/1124181688566681701/1191341307340259379/2024-01-01_19.18.55.png",
+http.get("https://raw.githubusercontent.com/lua-gods/Scarlet-Avatar/main/textures/.src/sunset.png",
 function (result, err)
-   if not err then
+   if err and err ~= 200 then
+      errr = err .. " " .. (httpErrors[err] or "")
+   else
       textures:read("wallpaper",result)
-      wallpaper_ready = true
    end
+   wallpaper_ready = true
 end,"base64")
 
 ---@param ray_dir Vector3
@@ -56,28 +125,36 @@ local function new(skull,events)
    for i = 1, 100, 1 do if not check(mat:apply(0,-i,0),b) then break end r.w = r.w + 1 end
 
    local size = vectors.vec2(r.x+r.z+1,r.y+r.w+1)
+   local screen = gnui.newContainer()
 
    -- create a screen
    local wallpaper = bg:copy()
    events.FRAME:register(function ()
       if wallpaper_ready then
-         wallpaper:setTexture(textures.wallpaper):setColor(0,0,0)
-
-         local dim = textures.wallpaper:getDimensions()
-         local r1,r2 = (dim.x / dim.y),(size.x / size.y)
-         tween.tweenFunction(0,1,3,"inOutCubic",function (value, transition)
-            wallpaper:setColor(value,value,value)
-         end)
-         events.TICK:register(function ()
-            local o = (0.2 + (math.sin(client:getSystemTime() / 10000)) * 0.1 * 0.5 + 0.5) * ((r1 - r2) * dim.y)
-            wallpaper:setUV(o,0,(dim.x-1) / r1 * r2 + o,dim.y-1)
-         end)
+         
+         if errr then
+            local err_label = gnui.newLabel()
+            err_label:setText({text=errr,color="red"}):setAlign(0.5,0.5)
+            err_label:setAnchor(0,0,1,1)
+            err_label:canCaptureCursor(false)
+            screen:addChild(err_label)
+         else
+            local dim = textures.wallpaper:getDimensions()
+            local r1,r2 = (dim.x / dim.y),(size.x / size.y)
+            wallpaper:setTexture(textures.wallpaper):setColor(0,0,0)
+            tween.tweenFunction(0,1,3,"inOutCubic",function (value, transition)
+               wallpaper:setColor(value,value,value)
+            end)
+            events.TICK:register(function ()
+               local o = (0.2 + (math.sin(client:getSystemTime() / 10000)) * 0.1 * 0.5 + 0.5) * ((r1 - r2) * dim.y)
+               wallpaper:setUV(o,0,(dim.x-1) / r1 * r2 + o,dim.y-1)
+            end)
+         end
          events.FRAME:remove("wallwait")
       end
    end,"wallwait")
 
-   
-   local screen = gnui.newContainer():setSprite(wallpaper)
+   screen:setSprite(wallpaper)
    skull.model_block
    :newPart("screen")
    :pos((-skull.dir * 1.51 + vectors.vec3(0.5,0.5,0.5)) * 16)
