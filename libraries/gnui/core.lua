@@ -1,5 +1,5 @@
 local config = {
-   debug_visible = true,
+   debug_visible = false,
    debug_scale = 1,
    
    clipping_margin = 0.01,

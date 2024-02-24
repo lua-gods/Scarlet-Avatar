@@ -55,11 +55,6 @@ function sprite.new(obj)
       new:_updateRenderTasks()
    end,core.internal_events_name)
 
-   new.MODELPART_CHANGED:register(function ()
-      new:_deleteRenderTasks()
-      new:_buildRenderTasks()
-   end,core.internal_events_name)
-
    new.BORDER_THICKNESS_CHANGED:register(function ()
       new:_deleteRenderTasks()
       new:_buildRenderTasks()
@@ -76,7 +71,11 @@ end
 ---@param part ModelPart
 ---@return Sprite
 function sprite:setModelpart(part)
+   if self.Modelpart then
+      self.Modelpart:_deleteRenderTasks()
+   end
    self.Modelpart = part
+   self:_buildRenderTasks()
    self.MODELPART_CHANGED:invoke(self.Modelpart)
    return self
 end

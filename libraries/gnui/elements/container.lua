@@ -249,11 +249,11 @@ end
 ---@overload fun(self : GNUI.container, vec4 : Vector4): GNUI.container
 ---@param x number
 ---@param y number?
----@param z number?
 ---@param w number?
+---@param t number?
 ---@return GNUI.container
-function container:setDimensions(x,y,z,w)
-   local new = utils.figureOutVec4(x,y,z or x,w or y)
+function container:setDimensions(x,y,w,t)
+   local new = utils.figureOutVec4(x,y,w or x,t or y)
    self.Dimensions = new
    self.DIMENSIONS_CHANGED:invoke(self.Dimensions)
    return self

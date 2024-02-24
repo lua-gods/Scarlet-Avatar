@@ -1,75 +1,85 @@
 local gnui = require("libraries.gnui")
 local http = require("libraries.http")
 local tween = require("libraries.GNTweenLib")
+local eventlib = require("libraries.eventLib")
 local bg = gnui.newSprite():setTexture(textures:newTexture("1x1black",1,1):setPixel(0,0,vectors.vec3(0,0,0))):setUV(1,0)
 
 local httpErrors = {
-   [100] = "Continue",
-   [101] = "Switching Protocols",
-   [102] = "Processing",
-   [103] = "Early Hints",
-   [200] = "OK",
-   [201] = "Created",
-   [202] = "Accepted",
-   [203] = "Non-Authoritative Information",
-   [204] = "No Content",
-   [205] = "Reset Content",
-   [206] = "Partial Content",
-   [207] = "Multi-Status",
-   [208] = "Already Reported",
-   [226] = "IM Used",
-   [300] = "Multiple Choices",
-   [301] = "Moved Permanently",
-   [302] = "Found",
-   [303] = "See Other",
-   [304] = "Not Modified",
-   [305] = "Use Proxy",
-   [307] = "Temporary Redirect",
-   [308] = "Permanent Redirect",
-   [400] = "Bad Request",
-   [401] = "Unauthorized",
-   [402] = "Payment Required",
-   [403] = "Forbidden",
-   [404] = "Not Found",
-   [405] = "Method Not Allowed",
-   [406] = "Not Acceptable",
-   [407] = "Proxy Authentication Required",
-   [408] = "Request Timeout",
-   [409] = "Conflict",
-   [410] = "Gone",
-   [411] = "Length Required",
-   [412] = "Precondition Failed",
-   [413] = "Payload Too Large",
-   [414] = "URI Too Long",
-   [415] = "Unsupported Media Type",
-   [416] = "Range Not Satisfiable",
-   [417] = "Expectation Failed",
-   [418] = "I'm a teapot",
-   [421] = "Misdirected Request",
-   [422] = "Unprocessable Entity",
-   [423] = "Locked",
-   [424] = "Failed Dependency",
-   [425] = "Too Early",
-   [426] = "Upgrade Required",
-   [428] = "Precondition Required",
-   [429] = "Too Many Requests",
-   [431] = "Request Header Fields Too Large",
-   [451] = "Unavailable For Legal Reasons",
-   [500] = "Internal Server Error",
-   [501] = "Not Implemented",
-   [502] = "Bad Gateway",
-   [503] = "Service Unavailable",
-   [504] = "Gateway Timeout",
-   [505] = "HTTP Version Not Supported",
-   [506] = "Variant Also Negotiates",
-   [507] = "Insufficient Storage",
-   [508] = "Loop Detected",
-   [510] = "Not Extended",
-   [511] = "Network Authentication Required",
+[100] = "Continue",
+[101] = "Switching Protocols",
+[102] = "Processing",
+[103] = "Early Hints",
+[200] = "OK",
+[201] = "Created",
+[202] = "Accepted",
+[203] = "Non-Authoritative Information",
+[204] = "No Content",
+[205] = "Reset Content",
+[206] = "Partial Content",
+[207] = "Multi-Status",
+[208] = "Already Reported",
+[226] = "IM Used",
+[300] = "Multiple Choices",
+[301] = "Moved Permanently",
+[302] = "Found",
+[303] = "See Other",
+[304] = "Not Modified",
+[305] = "Use Proxy",
+[307] = "Temporary Redirect",
+[308] = "Permanent Redirect",
+[400] = "Bad Request",
+[401] = "Unauthorized",
+[402] = "Payment Required",
+[403] = "Forbidden",
+[404] = "Not Found",
+[405] = "Method Not Allowed",
+[406] = "Not Acceptable",
+[407] = "Proxy Authentication Required",
+[408] = "Request Timeout",
+[409] = "Conflict",
+[410] = "Gone",
+[411] = "Length Required",
+[412] = "Precondition Failed",
+[413] = "Payload Too Large",
+[414] = "URI Too Long",
+[415] = "Unsupported Media Type",
+[416] = "Range Not Satisfiable",
+[417] = "Expectation Failed",
+[418] = "I'm a teapot",
+[421] = "Misdirected Request",
+[422] = "Unprocessable Entity",
+[423] = "Locked",
+[424] = "Failed Dependency",
+[425] = "Too Early",
+[426] = "Upgrade Required",
+[428] = "Precondition Required",
+[429] = "Too Many Requests",
+[431] = "Request Header Fields Too Large",
+[451] = "Unavailable For Legal Reasons",
+[500] = "Internal Server Error",
+[501] = "Not Implemented",
+[502] = "Bad Gateway",
+[503] = "Service Unavailable",
+[504] = "Gateway Timeout",
+[505] = "HTTP Version Not Supported",
+[506] = "Variant Also Negotiates",
+[507] = "Insufficient Storage",
+[508] = "Loop Detected",
+[510] = "Not Extended",
+[511] = "Network Authentication Required",
 }
 
-local errr
+local APPS_CHANGED = eventlib.new()
+local apps = {}
 
+---@class GNUI.TV.app
+---@field TICK EventLib
+---@field FRAME EventLib
+---@field EXIT EventLib
+
+
+
+local errr
 local wallpaper_ready = false
 local link = "https://raw.githubusercontent.com/lua-gods/Scarlet-Avatar/main/textures/.src/sunset.png"
 http.get(link,
@@ -81,6 +91,8 @@ function (result, err)
    end
    wallpaper_ready = true
 end,"base64")
+
+
 
 ---@param ray_dir Vector3
 ---@param plane_dir Vector3
@@ -100,11 +112,15 @@ local function ray2plane(ray_pos, ray_dir, plane_pos, plane_dir)
    return intersection
 end
 
+
+
 ---@param pos Vector3
 ---@param block Minecraft.blockID
 local function check(pos,block)
    return world.getBlockState(pos).id == block
 end
+
+
 
 ---@param skull WorldSkull
 ---@param events SkullEvents
@@ -114,7 +130,6 @@ local function new(skull,events)
    :rotateY(skull.rot)
    :translate(skull.pos)
    :translate(-skull.dir)
-
    local lmat = mat:copy():invert()
 
    -- get screen size
@@ -127,6 +142,10 @@ local function new(skull,events)
 
    local size = vectors.vec2(r.x+r.z+1,r.y+r.w+1)
    local screen = gnui.newContainer()
+
+   local app_list = gnui.newContainer()
+   app_list:setAnchor(0,0,1,1)
+   screen:addChild(app_list)
 
    -- create a screen
    local wallpaper = bg:copy()
@@ -159,6 +178,41 @@ local function new(skull,events)
          end
          events.FRAME:remove("wallwait")
       end
+      
+      APPS_CHANGED:register(function ()
+         -- school massacre
+         for key, child in pairs(app_list.Children) do
+            child:free()
+            app_list:removeChild(child)
+         end
+         local i = 0
+         for key, app in pairs(apps) do
+            local icontainer = gnui.newContainer()
+            local sp = gnui.newSprite()
+            sp:setTexture(app.icon)
+
+            local icon = gnui.newContainer()
+            icon:setSprite(sp)
+            icon:setAnchor(0.25,0.25,0.75,0.75)
+            icontainer:addChild(icon)
+
+            local name = gnui.newLabel()
+            name:setText(app.name)
+            name:setAlign(0.5,0)
+            name:setAnchor(0,1,1,1)
+            name:setDimensions(-100,-8,100,0)
+            name:setFontScale(0.5)
+            name:setTextEffect("SHADOW")
+
+            icontainer:setDimensions(i* 32,0,32+i* 32,32)
+            i = i + 1
+            icontainer:addChild(name)
+            app_list:addChild(icontainer)
+         end
+      end,skull.i)
+      events.EXIT:register(function ()
+         APPS_CHANGED:remove(skull.i)
+      end)
    end,"wallwait")
 
    screen:setSprite(wallpaper)
@@ -191,23 +245,35 @@ local function new(skull,events)
                math.map(lp.x,-r.z,r.x+1,0,size.x * 16),
                math.map(lp.y,-r.w,r.y+1,size.y * 16,0)
             )
-            --particles.end_rod:pos(p):lifetime(0):spawn():scale(1)
          end
       end
-      
-   end)
-   -- W
-   local label = gnui.newLabel()
-   label:canCaptureCursor(false)
-      label:setFontScale(4)
-      :setText({text="W"})
-      :setAnchor(0,0,1,1)
-      screen:addChild(label)
-   events.FRAME:register(function ()
-      local time = client:getSystemTime() / 5000
-      label:setAlign(math.abs(time % 2 - 1) ,math.abs(time * 0.99 % 2 - 1))
    end)
 end
+
+local app_check_timer = 0
+events.WORLD_TICK:register(function ()
+   app_check_timer = app_check_timer + 1
+   if app_check_timer > 10 then
+      app_check_timer = 0
+      for _, vars in pairs(world.avatarVars()) do
+         for key, data in pairs(vars) do
+            if key:match("^gnui.app.") then
+               if not apps[data.id] or (apps[data.id] and apps[data.id].update ~= data.update) then
+                  --register app
+                  apps[data.id] = {
+                     update = data.update,
+                     name   = data.name,
+                     new    = data.new,
+                     id     = data.id,
+                     icon   = data.icon,
+                  }
+                  APPS_CHANGED:invoke()
+               end
+            end
+         end
+      end
+   end
+end)
 
 ---@param skull WorldSkull
 return function (skull)
