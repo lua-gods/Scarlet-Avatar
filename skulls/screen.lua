@@ -50,10 +50,10 @@ local function new(skull,events)
    -- get screen size
    local b = world.getBlockState(mat:apply(0,0,0)).id
    local r = vectors.vec4()
-   for i = 1, 10, 1 do if not check(mat:apply(i,0,0),b) then break end r.x = r.x + 1 end
-   for i = 1, 10, 1 do if not check(mat:apply(-i,0,0),b) then break end r.z = r.z + 1 end
-   for i = 1, 10, 1 do if not check(mat:apply(0,i,0),b) then break end r.y = r.y + 1 end
-   for i = 1, 10, 1 do if not check(mat:apply(0,-i,0),b) then break end r.w = r.w + 1 end
+   for i = 1, 100, 1 do if not check(mat:apply(i,0,0),b) then break end r.x = r.x + 1 end
+   for i = 1, 100, 1 do if not check(mat:apply(-i,0,0),b) then break end r.z = r.z + 1 end
+   for i = 1, 100, 1 do if not check(mat:apply(0,i,0),b) then break end r.y = r.y + 1 end
+   for i = 1, 100, 1 do if not check(mat:apply(0,-i,0),b) then break end r.w = r.w + 1 end
 
    local size = vectors.vec2(r.x+r.z+1,r.y+r.w+1)
 
@@ -92,24 +92,25 @@ local function new(skull,events)
    )
    -- input processing
    events.FRAME:register(function ()
-      local player = client:getViewer()
       local p = ray2plane(
          client:getCameraPos(),
          client:getCameraDir(),
          skull.pos:copy():add(0.5,0.5,0.5) - skull.dir * 1.5,
          skull.dir
       )
-      local lp = lmat:apply(p)
-      if p 
-      and lp.y > -r.w and lp.y-1 < r.y
-      and lp.x > -r.z and lp.x-1 < r.x
-      then
-         screen:setCursor(
-            math.map(lp.x,-r.z,r.x+1,0,size.x * 16),
-            math.map(lp.y,-r.w,r.y+1,size.y * 16,0)
-         )
-         --particles.end_rod:pos(p):lifetime(0):spawn():scale(1)
+      if p then
+         local lp = lmat:apply(p + vectors.vec3(0,0.5,0) + (vectors.rotateAroundAxis(90,skull.dir,vectors.vec3(0,1,0)) * -0.5 - 0.5))
+         if lp.y > -r.w and lp.y-1 < r.y
+         and lp.x > -r.z and lp.x-1 < r.x
+         then
+            screen:setCursor(
+               math.map(lp.x,-r.z,r.x+1,0,size.x * 16),
+               math.map(lp.y,-r.w,r.y+1,size.y * 16,0)
+            )
+            --particles.end_rod:pos(p):lifetime(0):spawn():scale(1)
+         end
       end
+      
    end)
    -- W
    local label = gnui.newLabel()
