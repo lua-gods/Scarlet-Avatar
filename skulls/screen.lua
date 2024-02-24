@@ -71,7 +71,8 @@ local httpErrors = {
 local errr
 
 local wallpaper_ready = false
-http.get("https://raw.githubusercontent.com/lua-gods/Scarlet-Avatar/main/textures/.src/sunset.png",
+local link = "https://raw.githubusercontaaent.com/lua-gods/Scarlet-Avatar/main/textures/.src/sunset.png"
+http.get(link,
 function (result, err)
    if err and err ~= 200 then
       errr = err .. " " .. (httpErrors[err] or "")
@@ -132,12 +133,18 @@ local function new(skull,events)
    events.FRAME:register(function ()
       if wallpaper_ready then
          
+         local err_link = gnui.newLabel():setAlign(0.5,0.6)
          if errr then
-            local err_label = gnui.newLabel()
-            err_label:setText({text=errr,color="red"}):setAlign(0.5,0.5)
-            err_label:setAnchor(0,0,1,1)
-            err_label:canCaptureCursor(false)
-            screen:addChild(err_label)
+            local err_label = gnui.newLabel():setAlign(0.5,0.5)
+            err_link:setText({text=link,color="red"}):setFontScale(0.25)
+            if not httpErrors[errr] then
+               err_label:setText({text="Link Not Allowed",color="red"})
+            else
+               err_label:setText({text=errr,color="red"})
+               err_label:canCaptureCursor(false)
+            end
+            screen:addChild(err_label:setAnchor(0,0,1,1))
+            screen:addChild(err_link:setAnchor(0,0,1,1))
          else
             local dim = textures.wallpaper:getDimensions()
             local r1,r2 = (dim.x / dim.y),(size.x / size.y)
