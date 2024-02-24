@@ -24,7 +24,6 @@ local function ray2plane(ray_pos, ray_dir, plane_pos, plane_dir)
    local intersection = ray_pos + ray_dir * t
    return intersection
 end
-
 local HOVER_SIZE = vectors.vec2(0.5,0.8)
 local s = 1/16
 

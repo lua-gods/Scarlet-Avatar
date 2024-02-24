@@ -239,7 +239,7 @@ end
 function label:_updateRenderTasks()
    local i = 0
    local size = self.ContainmentRect.xy - self.ContainmentRect.zw -- inverted for optimization
-   local pos = vectors.vec2()
+   local pos = vectors.vec2(0,self.LineHeight)
    if #self.TextData == 0 then return end
    local offset = vectors.vec2(0,(size.y / self.FontScale)  * self.Align.y + #self.TextData * self.LineHeight * self.Align.y)
    for _, line in pairs(self.TextData) do
