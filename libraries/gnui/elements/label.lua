@@ -148,8 +148,10 @@ local function flattenComponents(json)
          local end_line = select(2,string.gsub(comp.text,"\n",""))
          local i = 0
          for line in string.gmatch(comp.text,"[^\n]*") do -- separate each line
+            content = {}
             content_length = 0
             for word in string.gmatch(line,"[%s]*[%S]+[%s]*") do -- split words
+               i = i + 1
                local prop = {}
                -- only append used data in labels
                prop.font = comp.font
@@ -171,7 +173,6 @@ local function flattenComponents(json)
             if i ~= end_line then -- last line
                lines[#lines+1] = {content = content,length = content_length}
             end
-            i = i + 1
          end
       end
       if comp.extra then
@@ -183,7 +184,6 @@ local function flattenComponents(json)
          end
       end
    end
-   lines[#lines+1] = {content = content,length = content_length}
    return lines
 end
 
@@ -243,11 +243,13 @@ function label:_updateRenderTasks()
    if #self.TextData == 0 then return end
    local offset = vectors.vec2(0,(size.y / self.FontScale)  * self.Align.y + #self.TextData * self.LineHeight * self.Align.y)
    for _, line in pairs(self.TextData) do
+      pos.x = 0
+      pos.y = pos.y - self.LineHeight
       offset.x = (size.x / self.FontScale) * self.Align.x + line.length * self.Align.x
       for c, component in pairs(line.content) do
          i = i + 1
          local task = self.RenderTasks[i]
-         if pos.x - component.length > size.x then
+         if (pos.x - component.length > size.x / self.FontScale) or c == 1 then
             if self._TextChanged then
                task
                :setPos(pos.xy_:add(offset.x,offset.y) * self.FontScale)
