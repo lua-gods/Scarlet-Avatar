@@ -31,3 +31,6 @@ models.sl.Torso.Hed:scale(r,r,r)
 renderer:offsetCameraPivot(0,eye_height * body_size - eye_height,0)
 renderer:setEyeOffset(0,eye_height * body_size - eye_height,0)
 renderer:setShadowRadius(body_size*0.5)
+
+avatar:store("hair_color",vectors.hexToRGB("#522933"))
+avatar:store("plushie_height",10)
