@@ -318,18 +318,25 @@ end
 
 ---Sets the Cursor position relative to the top left of the container.  
 ---Returns true if the cursor is hovering over the container.  
----@overload fun(vec2 : Vector2): GNUI.container
+---@overload fun(vec2 : Vector2, press : boolean?): GNUI.container
+---@overload fun(press : boolean): GNUI.container
 ---@param x number?
 ---@param y number?
----@param forced boolean?
+---@param press boolean?
 ---@return boolean
-function container:setCursor(x,y,forced)
-   forced = forced or false
-   local pos = utils.figureOutVec2(x,y)
+function container:setCursor(x,y,press)
+   local pos
+   if type(x) == "boolean" and x then
+      press = true
+      pos = self.Cursor
+   else
+      press = press or false
+      pos = utils.figureOutVec2(x,y)
+   end
    local lhovering = self.Hovering
-   self.Hovering = self:isHovering(pos)
    self.Cursor = pos
-   if self.Hovering and not forced then
+   self.Hovering = self:isHovering(self.Cursor)
+   if self.Hovering then
       local hovering
       for i = #self.Children, 1, -1 do
          local child = self.Children[i]
@@ -337,7 +344,7 @@ function container:setCursor(x,y,forced)
             if child.CaptureCursor then
                hovering = child:setCursor(
                   self.Cursor.x-child.ContainmentRect.x,
-                  self.Cursor.y-child.ContainmentRect.y)
+                  self.Cursor.y-child.ContainmentRect.y,press)
                if hovering then -- obstructed by child
                   self.Hovering = false
                end
@@ -349,6 +356,9 @@ function container:setCursor(x,y,forced)
          end
       end
    end
+   if self.Hovering and press then
+      self.PRESSED:invoke()
+   end
    if self.Hovering ~= lhovering then
       if self.Hovering then
          self.MOUSE_ENTERED:invoke()
@@ -356,12 +366,8 @@ function container:setCursor(x,y,forced)
          self.MOUSE_EXITED:invoke()
       end
    end
-   if forced then
-      self.PRESSED:invoke()
-   else
-      if self.Hovering and self.CaptureCursor then
-         self.CURSOR_CHANGED:invoke(pos)
-      end
+   if self.Hovering and self.CaptureCursor then
+      self.CURSOR_CHANGED:invoke(pos)
    end
    --self.DIMENSIONS_CHANGED:invoke(self.Dimensions)
    return self.Hovering

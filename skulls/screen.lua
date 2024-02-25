@@ -179,7 +179,7 @@ local function new(skull,events)
          events.FRAME:remove("wallwait")
       end
       
-      APPS_CHANGED:register(function ()
+      local function updateList()
          -- school massacre
          for key, child in pairs(app_list.Children) do
             child:free()
@@ -194,6 +194,7 @@ local function new(skull,events)
             local icon = gnui.newContainer()
             icon:setSprite(sp)
             icon:setAnchor(0.25,0.25,0.75,0.75)
+            icon:canCaptureCursor(false)
             icontainer:addChild(icon)
 
             local name = gnui.newLabel()
@@ -203,13 +204,20 @@ local function new(skull,events)
             name:setDimensions(-100,-8,100,0)
             name:setFontScale(0.5)
             name:setTextEffect("SHADOW")
+            name:canCaptureCursor(false)
 
             icontainer:setDimensions(i* 32,0,32+i* 32,32)
             i = i + 1
             icontainer:addChild(name)
             app_list:addChild(icontainer)
+            icontainer.PRESSED:register(function ()
+               print(app.id)
+               skull.data.current_app = app.id
+            end)
          end
-      end,skull.i)
+      end
+      updateList()
+      APPS_CHANGED:register(updateList,skull.i)
       events.EXIT:register(function ()
          APPS_CHANGED:remove(skull.i)
       end)
@@ -229,13 +237,14 @@ local function new(skull,events)
       r.w * 16 + 8
    )
    -- input processing
-   events.FRAME:register(function ()
+   events.TICK:register(function ()
       local p = ray2plane(
          client:getCameraPos(),
          client:getCameraDir(),
          skull.pos:copy():add(0.5,0.5,0.5) - skull.dir * 1.5,
          skull.dir
       )
+
       if p then
          local lp = lmat:apply(p + vectors.vec3(0,0.5,0) + (vectors.rotateAroundAxis(90,skull.dir,vectors.vec3(0,1,0)) * -0.5 - 0.5))
          if lp.y > -r.w and lp.y-1 < r.y
@@ -247,6 +256,9 @@ local function new(skull,events)
             )
          end
       end
+      if client:getViewer():getSwingTime() == 1 then
+         screen:setCursor(true)
+      end
    end)
 end
 
@@ -257,7 +269,7 @@ events.WORLD_TICK:register(function ()
       app_check_timer = 0
       for _, vars in pairs(world.avatarVars()) do
          for key, data in pairs(vars) do
-            if key:match("^gnui.app.") then
+            if key:match("^gnui%.app%..") then
                if not apps[data.id] or (apps[data.id] and apps[data.id].update ~= data.update) then
                   --register app
                   apps[data.id] = {
