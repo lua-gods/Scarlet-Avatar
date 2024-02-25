@@ -68,7 +68,7 @@ for key, value in pairs(verts) do
    end
 end
 
-models.sl.Torso.Hed.Glass:setPrimaryRenderType("EMISSIVE"):setColor(0.4,0.4,0.4)
+models.sl.Torso.Hed.Glass:setPrimaryRenderType("EYES"):setColor(0.4,0.4,0.4)
 events.RENDER:register(function (delta, context)
    if not player:isLoaded() then
       return
@@ -88,7 +88,7 @@ events.RENDER:register(function (delta, context)
    local mat = matrices.mat3()
    local crot = client:getCameraPos()-player:getPos()
    mat
-   :rotateZ(16)
+   :rotateZ(32)
    :translate(0,-crot.y + math.atan2(crot.z,crot.x) + true_rot.x / 90)
    models.sl.Torso.Hed.Glass:setUVMatrix(mat)
 
