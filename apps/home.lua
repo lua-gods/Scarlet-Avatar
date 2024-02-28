@@ -74,7 +74,7 @@ local wallpaper_ready = false
 local link = "https://raw.githubusercontent.com/lua-gods/Scarlet-Avatar/main/textures/.src/sunset.png"
 http.get(link,
 function (result, err)
-   if err and err ~= 200 then
+   if err then
       errr = err .. " " .. (httpErrors[err] or "")
    else
       textures:read("wallpaper",result)
@@ -86,11 +86,12 @@ end,"base64")
 ---@param screen GNUI.container
 ---@return GNUI.TV.app
 local function new(events,screen,skull)
-   local size = screen.Dimensions.zw-screen.Dimensions.xy
+   local size = skull.data.tv_size
 
-   local wallpaper = bg:copy()
+   local wallpaper = bg:copy():setRenderType("EMISSIVE_SOLID")
    events.FRAME:register(function ()
       if wallpaper_ready then
+         screen:setSprite(wallpaper)
          
          local err_link = gnui.newLabel():setAlign(0.5,0.6)
          if errr then
@@ -147,7 +148,7 @@ local function new(events,screen,skull)
          name:setAnchor(0,1,1,1)
          name:setDimensions(-100,-8,100,0)
          name:setFontScale(0.5)
-         name:setTextEffect("SHADOW")
+         name:setTextEffect("OUTLINE")
          name:canCaptureCursor(false)
 
          icontainer:setDimensions(i* 32,0,32+i* 32,32)
@@ -174,5 +175,5 @@ avatar:store("gnui.app.home",{
    update = client:getSystemTime(),
    name   = "Home",
    new    = new,
-   icon   = textures["textures.calculator"],
+   icon   = textures["textures.home"],
 })

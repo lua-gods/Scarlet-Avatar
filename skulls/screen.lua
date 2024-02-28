@@ -62,8 +62,8 @@ local function new(skull,events)
    skull.data.APPS_CHANGED = eventLib.new()
    skull.data.startup = true
    APPS_CHANGED:register(function ()
-      if skull.data.startup and apps["scarletlight:home"] then
-         skull.data.setApp("scarletlight:home")
+      if skull.data.startup and apps["system:home"] then
+         skull.data.setApp("system:home")
          skull.data.startup = false
       end
       skull.data.APPS_CHANGED:invoke()
@@ -82,7 +82,7 @@ local function new(skull,events)
          }
          skull.data.current_app_id = id
          math.randomseed(client:getSystemTime())
-         local blank_sprite = gnui.newSprite():setTexture(textures["textures.endesga"]):setUV(math.random()*16,math.random()*16)
+         local blank_sprite = gnui.newSprite():setTexture(textures["textures.endesga"]):setUV(math.random()*16,math.random()*16):setRenderType("EMISSIVE_SOLID")
          local app_screen = gnui.newContainer():setSprite(blank_sprite):setAnchor(0,0,1,1)
          skull.data.current_app = apps[id].new(app_event,app_screen,skull)
          skull.data.current_app_events = app_event
@@ -107,8 +107,12 @@ local function new(skull,events)
       r.x * 16 + 8,
       r.w * 16 + 8
    )
+   skull.data.tv_size = size
    -- input processing
    events.TICK:register(function ()
+      if skull.data.current_app_events then
+         skull.data.current_app_events.TICK:invoke()
+      end
       local p = ray2plane(
          client:getCameraPos(),
          client:getCameraDir(),
@@ -131,6 +135,12 @@ local function new(skull,events)
          screen:setCursor(true)
       end
    end)
+
+   events.FRAME:register(function (dt,df)
+      if skull.data.current_app_events then
+         skull.data.current_app_events.FRAME:invoke(dt,df)
+      end
+   end)
 end
 
 
@@ -143,7 +153,7 @@ events.WORLD_TICK:register(function ()
          for key, data in pairs(vars) do
             if key:match("^gnui%.app%..") then
                if world.getEntity(uuid) then
-                  local id = world.getEntity(uuid):getName():lower()..":"..data.name:lower()
+                  local id = (uuid == avatar:getUUID() and 'system' or uuid) .. ':' .. data.name:lower()
                   if not apps[id] or (apps[id] and apps[id].update ~= data.update) then
                      --register app
                      apps[id] = {
@@ -153,7 +163,7 @@ events.WORLD_TICK:register(function ()
                         new    = data.new,
                         icon   = data.icon,
                      }
-                     print("new app: " .. id)
+                     --print("new app: " .. id)
                      APPS_CHANGED:invoke()
                   end
                end

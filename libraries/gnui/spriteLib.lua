@@ -41,7 +41,7 @@ function sprite.new(obj)
    new.Scale = new.Scale or 1
    new.DIMENSIONS_CHANGED = eventLib.new()
    new.RenderTasks = {}
-   new.RenderType = new.RenderType or "EMISSIVE_SOLID"
+   new.RenderType = new.RenderType or "CUTOUT_EMISSIVE_SOLID"
    new.BorderThickness = new.BorderThickness or vectors.vec4(0,0,0,0)
    new.BORDER_THICKNESS_CHANGED = eventLib.new()
    new.ExcludeMiddle = new.ExcludeMiddle or false
