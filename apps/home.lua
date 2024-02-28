@@ -71,7 +71,7 @@ local httpErrors = {
 
 local errr
 local wallpaper_ready = false
-local link = "https://raw.githubusercontent.com/lua-gods/Scarlet-Avatar/main/textures/.src/sunset.png"
+local link = "https://raw.githubusercontent.com/lua-gods/Scarlet-Avatar/main/textures/.src/nekoatsume.png"
 http.get(link,
 function (result, err)
    if err then
