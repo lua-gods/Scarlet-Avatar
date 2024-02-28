@@ -1,8 +1,6 @@
-local gnui = require("libraries.gnui")
 local http = require("libraries.http")
 local tween = require("libraries.GNTweenLib")
 local eventlib = require("libraries.eventLib")
-local bg = gnui.newSprite():setTexture(textures:newTexture("1x1black",1,1):setPixel(0,0,vectors.vec3(0,0,0))):setUV(1,0)
 
 local httpErrors = {
 [100] = "Continue",
@@ -71,7 +69,7 @@ local httpErrors = {
 
 local errr
 local wallpaper_ready = false
-local link = "https://raw.githubusercontent.com/lua-gods/Scarlet-Avatar/main/textures/.src/nekoatsume.png"
+local link = "https://raw.githubusercontent.com/lua-gods/Scarlet-Avatar/main/textures/.src/catgame.png"
 http.get(link,
 function (result, err)
    if err then
@@ -82,13 +80,15 @@ function (result, err)
    wallpaper_ready = true
 end,"base64")
 
+---@param gnui GNUI
 ---@param events GNUI.TV.app
 ---@param screen GNUI.container
+---@param skull WorldSkull
 ---@return GNUI.TV.app
-local function new(events,screen,skull)
+local function new(gnui,screen,events,skull)
    local size = skull.data.tv_size
 
-   local wallpaper = bg:copy():setRenderType("EMISSIVE_SOLID")
+   local wallpaper = gnui.newSprite():setTexture(textures:newTexture("1x1black",1,1):setPixel(0,0,vectors.vec3(0,0,0))):setUV(1,0):setRenderType("EMISSIVE_SOLID")
    events.FRAME:register(function ()
       if wallpaper_ready then
          screen:setSprite(wallpaper)
@@ -109,7 +109,7 @@ local function new(events,screen,skull)
             local dim = textures.wallpaper:getDimensions()
             local r1,r2 = (dim.x / dim.y),(size.x / size.y)
             wallpaper:setTexture(textures.wallpaper):setColor(0,0,0)
-            tween.tweenFunction(0,1,3,"inOutCubic",function (value, transition)
+            tween.tweenFunction(0,1,1.5,"inOutCubic",function (value, transition)
                wallpaper:setColor(value,value,value)
             end)
             events.TICK:register(function ()

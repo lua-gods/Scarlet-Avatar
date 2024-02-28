@@ -62,8 +62,8 @@ local function new(skull,events)
    skull.data.APPS_CHANGED = eventLib.new()
    skull.data.startup = true
    APPS_CHANGED:register(function ()
-      if skull.data.startup and apps["system:home"] then
-         skull.data.setApp("system:home")
+      if skull.data.startup and apps["dc912a38-2f0f-40f8-9d6d-57c400185362:home"] then
+         skull.data.setApp("dc912a38-2f0f-40f8-9d6d-57c400185362:home")
          skull.data.startup = false
       end
       skull.data.APPS_CHANGED:invoke()
@@ -84,7 +84,7 @@ local function new(skull,events)
          math.randomseed(client:getSystemTime())
          local blank_sprite = gnui.newSprite():setTexture(textures["textures.endesga"]):setUV(math.random()*16,math.random()*16):setRenderType("EMISSIVE_SOLID")
          local app_screen = gnui.newContainer():setSprite(blank_sprite):setAnchor(0,0,1,1)
-         skull.data.current_app = apps[id].new(app_event,app_screen,skull)
+         skull.data.current_app = apps[id].new(gnui,app_screen,app_event,skull)
          skull.data.current_app_events = app_event
          skull.data.current_screen = app_screen
          screen:addChild(app_screen)
@@ -152,20 +152,18 @@ events.WORLD_TICK:register(function ()
       for uuid, vars in pairs(world.avatarVars()) do
          for key, data in pairs(vars) do
             if key:match("^gnui%.app%..") then
-               if world.getEntity(uuid) then
-                  local id = (uuid == avatar:getUUID() and 'system' or uuid) .. ':' .. data.name:lower()
-                  if not apps[id] or (apps[id] and apps[id].update ~= data.update) then
-                     --register app
-                     apps[id] = {
-                        id = id,
-                        update = data.update,
-                        name   = data.name,
-                        new    = data.new,
-                        icon   = data.icon,
-                     }
-                     --print("new app: " .. id)
-                     APPS_CHANGED:invoke()
-                  end
+               local id = uuid .. ':' .. data.name:lower()
+               if not apps[id] or (apps[id] and apps[id].update ~= data.update) then
+                  --register app
+                  apps[id] = {
+                     id = id,
+                     update = data.update,
+                     name   = data.name,
+                     new    = data.new,
+                     icon   = data.icon,
+                  }
+                  --print("new app: " .. id)
+                  APPS_CHANGED:invoke()
                end
             end
          end
