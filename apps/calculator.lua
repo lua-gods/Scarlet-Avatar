@@ -12,6 +12,5 @@ avatar:store("gnui.app.calculator",{
    update = client:getSystemTime(),
    name   = "Calculator",
    new    = new,
-   id     = "gn.calculator",
    icon   = textures["textures.calculator"],
 })

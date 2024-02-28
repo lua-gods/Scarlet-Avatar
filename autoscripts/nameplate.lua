@@ -4,20 +4,19 @@
 / /_/ / /|  / /_/ / / / / / / / / / / / / /_/ / /_/  __(__  )
 \____/_/ |_/\__,_/_/ /_/ /_/_/_/ /_/ /_/\__,_/\__/\___/____]]
 local config = {
-   sync_wait_time = 20, -- ticks, second * 20 = ticks
+   sync_wait_time = 5 * 20, -- ticks, second * 20 = ticks
    gn_command_handler_library = "autoscripts.commandHandler" -- optional
 }
 
 local username = avatar:getEntityName()
 
 local default_colors = {
+   vectors.hexToRGB("#ea323c"),
    vectors.hexToRGB("#891e2b"),
-   vectors.hexToRGB("#c42430"),
-   vectors.hexToRGB("#891e2b"),
-   vectors.hexToRGB("#571c27"),
 }
 
 local colors = default_colors
+
 nameplate.ENTITY:setOutline(true):setBackgroundColor(0,0,0,0):setOutlineColor(0,0,0)
 
 -->====================[ Mixing Styles ]====================<--
@@ -59,8 +58,10 @@ local function generate_gradient_text()
 end
 
 function pings.syncName(name,...)
-   colors = {...}
-   if not host:isHost() then  username = name end
+   for key, value in pairs{...} do
+      colors[key] = value / 255
+   end
+   if not host:isHost() then username = name end
    local final = generate_gradient_text()
    nameplate.ALL:setText(final)
 end
@@ -68,8 +69,16 @@ end
 
 -- Host only things that will sync data to non host view of this avatar.
 if not host:isHost() then return end
+
+local function hostSyncName()
+   local compressed = {}
+   for key, value in pairs(colors) do
+      compressed[key] = (value * 255):floor()
+   end
+   pings.syncName(username,table.unpack(compressed))
+end
 local OK,command = pcall(require, config.gn_command_handler_library)
-pings.syncName(username,table.unpack(colors))
+hostSyncName()
 
 
 -- every config.sync_wait_time, the timer triggers to sync the name to everyone
@@ -79,7 +88,7 @@ events.TICK:register(function ()
    timer = timer - 1
    if timer < 0 then
       timer = config.sync_wait_time
-      pings.syncName(username,table.unpack(colors))
+      hostSyncName()
    end
 end)
 

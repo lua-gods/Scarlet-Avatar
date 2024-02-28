@@ -1,5 +1,6 @@
 {
     "authors":["ScarletLight","GNamimates"],
     "color":"#ea323c",
-    "description":""
+    "description":"",
+    "autoScripts": ["initializer"]
 }
