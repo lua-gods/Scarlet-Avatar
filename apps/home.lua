@@ -69,7 +69,7 @@ local httpErrors = {
 
 local errr
 local wallpaper_ready = false
-local link = "https://raw.githubusercontent.com/lua-gods/Scarlet-Avatar/main/textures/.src/catgame.png"
+local link = "https://raw.githubusercontent.com/lua-gods/Scarlet-Avatar/main/textures/.src/vector_forest.png"
 http.get(link,
 function (result, err)
    if err then
@@ -133,25 +133,32 @@ local function new(gnui,screen,events,skull)
       local i = 0
       for key, app in pairs(skull.data.apps) do
          local icontainer = gnui.newContainer()
-         local sp = gnui.newSprite()
-         sp:setTexture(app.icon)
+         local spritecon = gnui.newSprite()
+         spritecon:setTexture(app.icon)
+         if app.icon_atlas_pos then
+            spritecon:setUV(
+               app.icon_atlas_pos.x*32,
+               app.icon_atlas_pos.y*32,
+               app.icon_atlas_pos.x*32+31,
+               app.icon_atlas_pos.y*32+31)
+         end
 
          local icon = gnui.newContainer()
-         icon:setSprite(sp)
-         icon:setAnchor(0.25,0.25,0.75,0.75)
+         icon:setSprite(spritecon)
+         icon:setAnchor(0.2,0.2,0.8,0.8)
          icon:canCaptureCursor(false)
          icontainer:addChild(icon)
 
          local name = gnui.newLabel()
-         name:setText(app.name)
+         name:setText({text=app.name,color="#2e112d"})
          name:setAlign(0.5,0)
          name:setAnchor(0,1,1,1)
-         name:setDimensions(-100,-8,100,0)
-         name:setFontScale(0.5)
-         name:setTextEffect("OUTLINE")
+         name:setDimensions(0,-4,0,4)
+         name:setFontScale(math.min(1/client.getTextWidth(app.name) * 24,0.4))
+         name:setTextEffect("NONE")
          name:canCaptureCursor(false)
 
-         icontainer:setDimensions(i* 32,0,32+i* 32,32)
+         icontainer:setDimensions(i* 24,0,24+i* 24,24)
          i = i + 1
          icontainer:addChild(name)
          app_list:addChild(icontainer)
@@ -175,5 +182,6 @@ avatar:store("gnui.app.home",{
    update = client:getSystemTime(),
    name   = "Home",
    new    = new,
-   icon   = textures["textures.home"],
+   icon   = textures["textures.icons"],
+   icon_atlas_pos = vectors.vec2(1,0)
 })

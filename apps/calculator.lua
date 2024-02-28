@@ -12,5 +12,6 @@ avatar:store("gnui.app.calculator",{
    update = client:getSystemTime(),
    name   = "Calculator",
    new    = new,
-   icon   = textures["textures.calculator"],
+   icon   = textures["textures.icons"],
+   icon_atlas_pos = vectors.vec2(0,0)
 })

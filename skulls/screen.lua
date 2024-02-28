@@ -161,6 +161,7 @@ events.WORLD_TICK:register(function ()
                      name   = data.name,
                      new    = data.new,
                      icon   = data.icon,
+                     icon_atlas_pos   = data.icon_atlas_pos,
                   }
                   --print("new app: " .. id)
                   APPS_CHANGED:invoke()
