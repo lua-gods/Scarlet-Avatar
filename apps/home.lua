@@ -87,7 +87,8 @@ end,"base64")
 ---@return GNUI.TV.app
 local function new(gnui,screen,events,skull)
    local size = skull.data.tv_size
-
+   events.TICK:register(function ()
+   end)
    local wallpaper = gnui.newSprite():setTexture(textures:newTexture("1x1black",1,1):setPixel(0,0,vectors.vec3(0,0,0))):setUV(1,0):setRenderType("EMISSIVE_SOLID")
    events.FRAME:register(function ()
       if wallpaper_ready then
@@ -107,7 +108,8 @@ local function new(gnui,screen,events,skull)
             screen:addChild(err_link:setAnchor(0,0,1,1))
          else
             local dim = textures.wallpaper:getDimensions()
-            local r1,r2 = (dim.x / dim.y),(size.x / size.y)
+            local r1,r2 = (dim.x / dim.y),
+            (size.x / size.y)
             wallpaper:setTexture(textures.wallpaper):setColor(0,0,0)
             tween.tweenFunction(0,1,1.5,"inOutCubic",function (value, transition)
                wallpaper:setColor(value,value,value)
@@ -171,7 +173,6 @@ local function new(gnui,screen,events,skull)
    updateList()
    skull.data.APPS_CHANGED:register(updateList,skull.i)
    events.EXIT:register(function ()
-      skull.data.apps = skull.data.apps
       skull.data.APPS_CHANGED:remove(skull.i)
    end)
 

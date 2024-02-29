@@ -1,6 +1,5 @@
 local gnui = require("libraries.gnui")
 
-
 ---@param app GNUI.TV.app
 ---@param screen GNUI.container
 ---@return GNUI.TV.app
@@ -15,3 +14,6 @@ avatar:store("gnui.app.calculator",{
    icon   = textures["textures.icons"],
    icon_atlas_pos = vectors.vec2(0,0)
 })
+
+--avatar:store("gnui.force_app","system:calculator")
+--avatar:store("gnui.force_app",client:getViewer():getUUID()..":calculator")

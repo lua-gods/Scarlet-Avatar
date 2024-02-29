@@ -60,14 +60,6 @@ local function new(skull,events)
 
    skull.data.apps = apps
    skull.data.APPS_CHANGED = eventLib.new()
-   skull.data.startup = true
-   APPS_CHANGED:register(function ()
-      if skull.data.startup and apps["dc912a38-2f0f-40f8-9d6d-57c400185362:home"] then
-         skull.data.setApp("dc912a38-2f0f-40f8-9d6d-57c400185362:home")
-         skull.data.startup = false
-      end
-      skull.data.APPS_CHANGED:invoke()
-   end)
    function skull.data.setApp(id)
       if id then
          if skull.data.current_screen then
@@ -90,8 +82,6 @@ local function new(skull,events)
          screen:addChild(app_screen)
       end
    end
-   
-   
 
    local screen_sprite = gnui.newSprite():setTexture(textures["textures.endesga"]):setUV(0,0)
    screen:setSprite(screen_sprite)
@@ -141,6 +131,28 @@ local function new(skull,events)
          skull.data.current_app_events.FRAME:invoke(dt,df)
       end
    end)
+   events.EXIT:register(function ()
+      skull.data.startup = false
+      if skull.data.current_app_events then
+         skull.data.current_app_events.EXIT:invoke()
+      end
+   end)
+
+   skull.data.startup = true
+   local function startup()
+      local default = "system:home"
+      local meta = world.avatarVars()[client:getViewer():getUUID()]
+      if meta and meta["gnui.force_app"] then
+         default = meta["gnui.force_app"]
+      end
+      if skull.data.startup and apps[default] then
+         skull.data.setApp(default)
+         skull.data.startup = false
+      end
+      skull.data.APPS_CHANGED:invoke()
+   end
+   startup()
+   APPS_CHANGED:register(startup)
 end
 
 
@@ -152,7 +164,7 @@ events.WORLD_TICK:register(function ()
       for uuid, vars in pairs(world.avatarVars()) do
          for key, data in pairs(vars) do
             if key:match("^gnui%.app%..") then
-               local id = uuid .. ':' .. data.name:lower()
+               local id = (uuid == avatar:getUUID() and 'system' or uuid) .. ':' .. data.name:lower()
                if not apps[id] or (apps[id] and apps[id].update ~= data.update) then
                   --register app
                   apps[id] = {
