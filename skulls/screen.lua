@@ -1,6 +1,6 @@
 local gnui = require("libraries.gnui")
 local eventLib = require("libraries.eventLib")
-
+local tween = require("libraries.GNTweenLib")
 local APPS_CHANGED = eventLib.new()
 local apps = {}
 
@@ -65,9 +65,21 @@ local function new(skull,events)
    skull.data.APPS_CHANGED = eventLib.new()
    function skull.data.setApp(id)
       if id then
-         if skull.data.current_screen then
-            skull.data.current_app_events.EXIT:invoke()
-            screen:removeChild(skull.data.current_screen)
+         if skull.data.current_app_screen then
+            local death_screen = skull.data.current_app_screen
+            local death_id = skull.data.current_app_id
+            if id == default_app then
+               death_screen:setZ(8)
+            end
+            tween.tweenFunction(1,0,0.4,"inOutQuart",function (t)
+               if death_id ~= default_app then
+                  death_screen:setAnchor(math.lerp(skull.data.transition_origin_anchor or vectors.vec4(.5,.5,.5,.5),vectors.vec4(0,0,1,1),t))
+                  death_screen:setDimensions(math.lerp(skull.data.transition_origin_dim or vectors.vec4(),vectors.vec4(0,0,0,0),t))
+               end
+            end,function ()
+               skull.data.current_app_events.EXIT:invoke()
+               screen:removeChild(death_screen)
+            end)
          end
          local exit = function ()
             skull.data.setApp(default_app)
@@ -85,7 +97,20 @@ local function new(skull,events)
          local app_screen = gnui.newContainer():setSprite(blank_sprite):setAnchor(0,0,1,1)
          skull.data.current_app = apps[id].new(gnui,app_screen,app_event,skull)
          skull.data.current_app_events = app_event
-         skull.data.current_screen = app_screen
+         skull.data.current_app_screen = app_screen
+
+         local birth_screen = skull.data.current_app_screen
+         if id ~= default_app then
+            birth_screen:setZ(8)
+         end
+         tween.tweenFunction(0,1,0.5,"inOutQuart",function (t)
+            if id ~= default_app then
+               birth_screen:setAnchor(math.lerp(skull.data.transition_origin_anchor or vectors.vec4(.5,.5,.5,.5),vectors.vec4(0,0,1,1),t))
+               birth_screen:setDimensions(math.lerp(skull.data.transition_origin_dim or vectors.vec4(),vectors.vec4(0,0,0,0),t))
+            end
+         end,function ()
+            birth_screen:setZ(0)
+         end)
          screen:addChild(app_screen)
       end
    end
