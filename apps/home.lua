@@ -164,6 +164,8 @@ local function new(gnui,screen,events,skull)
          icontainer:addChild(name)
          app_list:addChild(icontainer)
          icontainer.PRESSED:register(function ()
+            skull.data.transition_origin_dim = icontainer.Dimensions:copy():add(4,4,-4,-4)
+            skull.data.transition_origin_anchor = vectors.vec4()
             skull.data.setApp(app.id)
          end)
       end
