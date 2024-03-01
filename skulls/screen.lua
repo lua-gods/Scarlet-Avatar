@@ -4,6 +4,8 @@ local eventLib = require("libraries.eventLib")
 local APPS_CHANGED = eventLib.new()
 local apps = {}
 
+local default_app = "system:home"
+
 ---@class GNUI.TV.app
 ---@field TICK EventLib
 ---@field FRAME EventLib
@@ -58,6 +60,7 @@ local function new(skull,events)
    local size = vectors.vec2(r.x+r.z+1,r.y+r.w+1)
    local screen = gnui.newContainer()
 
+   local startup
    skull.data.apps = apps
    skull.data.APPS_CHANGED = eventLib.new()
    function skull.data.setApp(id)
@@ -66,11 +69,15 @@ local function new(skull,events)
             skull.data.current_app_events.EXIT:invoke()
             screen:removeChild(skull.data.current_screen)
          end
+         local exit = function ()
+            skull.data.setApp(default_app)
+         end
          ---@type GNUI.TV.app
          local app_event = {
             TICK  = eventLib.new(),
             FRAME = eventLib.new(),
-            EXIT  = eventLib.new()
+            EXIT  = eventLib.new(),
+            exit = exit
          }
          skull.data.current_app_id = id
          math.randomseed(client:getSystemTime())
@@ -139,8 +146,8 @@ local function new(skull,events)
    end)
 
    skull.data.startup = true
-   local function startup()
-      local default = "system:home"
+   startup = function ()
+      local default = default_app
       local meta = world.avatarVars()[client:getViewer():getUUID()]
       if meta and meta["gnui.force_app"] then
          default = meta["gnui.force_app"]
