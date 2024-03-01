@@ -74,7 +74,7 @@ local function new(skull,events)
          }
          skull.data.current_app_id = id
          math.randomseed(client:getSystemTime())
-         local blank_sprite = gnui.newSprite():setTexture(textures["textures.endesga"]):setUV(math.random()*16,math.random()*16):setRenderType("EMISSIVE_SOLID")
+         local blank_sprite = gnui.newSprite():setTexture(textures["textures.endesga"]):setUV(0,0):setRenderType("EMISSIVE_SOLID")
          local app_screen = gnui.newContainer():setSprite(blank_sprite):setAnchor(0,0,1,1)
          skull.data.current_app = apps[id].new(gnui,app_screen,app_event,skull)
          skull.data.current_app_events = app_event

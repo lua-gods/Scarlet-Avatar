@@ -84,7 +84,6 @@ end,"base64")
 ---@param events GNUI.TV.app
 ---@param screen GNUI.container
 ---@param skull WorldSkull
----@return GNUI.TV.app
 local function new(gnui,screen,events,skull)
    local size = skull.data.tv_size
    events.TICK:register(function ()
@@ -176,7 +175,6 @@ local function new(gnui,screen,events,skull)
       skull.data.APPS_CHANGED:remove(skull.i)
    end)
 
-   return events
 end
 
 avatar:store("gnui.app.home",{
