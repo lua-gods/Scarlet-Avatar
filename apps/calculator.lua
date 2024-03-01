@@ -69,17 +69,17 @@ local function new(gnui,screen,events,skull)
                button:setDimensions(1+t,1+t,-1-t,-1-t)
                button:setFontScale(1-t*0.25)
             end,nil,button.Text)
-            if tonumber(button.Text) then
-               output = output .. button.Text
-               update()
-            elseif button.Text == "<X]" then
-               output = output:sub(1,-2)
-               update()
-            elseif button.Text:match("[/*-+]") then
+            if button.Text:match("[/*%-+]") then
                lastlast = last
                last = output
                operator = button.Text
                output = ""
+               update()
+            elseif tonumber(button.Text) then
+               output = output .. button.Text
+               update()
+            elseif button.Text == "<X]" then
+               output = output:sub(1,-2)
                update()
             elseif button.Text == "=" and last ~= "" and output ~= "" then
                local a,b = tonumber(last),tonumber(output) 
