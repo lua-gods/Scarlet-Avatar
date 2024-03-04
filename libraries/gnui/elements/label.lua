@@ -1,5 +1,5 @@
 ---@diagnostic disable: assign-type-mismatch, undefined-field
-local eventLib = require("libraries.eventHandler")
+local eventLib = require("libraries.eventLib")
 
 local container = require("libraries.gnui.elements.container")
 local core = require("libraries.gnui.core")
@@ -27,7 +27,7 @@ end
 ---| "OUTLINE"
 ---| "SHADOW"
 
----@class GNUI.Label : GNUI.container     
+---@class GNUI.Label : GNUI.container 
 ---@field Text string|table               # The text that will be displayed on the label, for raw json, pass a table instead of a string json.
 ---@field TextData table                  # Baked data of the text.
 ---@field TextEffect TextEffect           # Determins the effects applied to the label.
@@ -38,7 +38,7 @@ end
 ---@field AutoWarp boolean                # Does nothing at the moment, but should toggle the word warping option.
 ---@field FontScale number                # Scales the text in the container.
 ---@field private _TextChanged boolean    
----@field TEXT_CHANGED EventLib           # Triggered when the text is changed.
+---@field TEXT_CHANGED eventLib           # Triggered when the text is changed.
 local label = {}
 label.__index = function (t,i)
    return label[i] or container[i]
@@ -67,23 +67,25 @@ function label.new()
       :_deleteRenderTasks()
       :_buildRenderTasks()
       :_updateRenderTasks()
-   end,core.internal_events_name.."_txt")
+   end)
 
    new.SIZE_CHANGED:register(function ()
       new:_updateRenderTasks()
-   end,core.internal_events_name.."_txt")
+   end)
 
    new.PARENT_CHANGED:register(function ()
       if not new.Parent then
          new:_deleteRenderTasks()
       end
       new.TEXT_CHANGED:invoke(new.Text)
-   end,core.internal_events_name.."_txt")
+   end)
    setmetatable(new,label)
    return new
 end
 
 ---Sets the text for the label to display.
+---@generic self
+---@param self self
 ---@param text string|table # For raw json text, use a table instead.
 ---@return self
 function label:setText(text)
@@ -102,6 +104,8 @@ end
 
 ---NOTE: Does not work yet.  
 ---determins whenever to allow word warping or not.
+---@generic self
+---@param self self
 ---@param wrap boolean
 ---@return self
 function label:wrapText(wrap)
@@ -112,6 +116,8 @@ end
 
 ---Sets how the text is anchored to the container.  
 --- horizontal or vertical by default is 0, making them clump up at the top left
+---@generic self
+---@param self self
 ---@param horizontal number? # left 0 <-> 1 right
 ---@param vertical number?   #up 0 <-> 1 down  
 ---@return self
@@ -132,6 +138,8 @@ end
 
 ---Determins the effect used for the label.  
 ---NONE, OUTLINE or SHADOW.
+---@generic self
+---@param self self
 ---@param effect TextEffect
 ---@return self
 function label:setTextEffect(effect)
@@ -225,6 +233,7 @@ function label:_bakeWords()
    return self
 end
 
+
 ---@return self
 function label:_buildRenderTasks()
    local i = 0
@@ -247,11 +256,15 @@ function label:_buildRenderTasks()
    return self
 end
 
+
+---@generic self
+---@param self self
+---@return self
 function label:_updateRenderTasks()
    local i = 0
    local size = self.ContainmentRect.xy - self.ContainmentRect.zw -- inverted for optimization
    local pos = vectors.vec2(0,self.LineHeight)
-   if #self.TextData == 0 then return end
+   if #self.TextData == 0 then return self end
    local offset = vectors.vec2(0,(size.y / self.FontScale)  * self.Align.y + #self.TextData * self.LineHeight * self.Align.y)
    for _, line in pairs(self.TextData) do
       pos.x = 0
@@ -275,6 +288,7 @@ function label:_updateRenderTasks()
    return self
 end
 
+---@return self
 function label:_deleteRenderTasks()
    for key, task in pairs(self.RenderTasks) do
       self.ModelPart:removeTask(task:getName())
