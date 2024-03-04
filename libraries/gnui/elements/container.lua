@@ -1,5 +1,4 @@
----@diagnostic disable: return-type-mismatch
-local eventLib = require("libraries.eventHandler")
+local eventLib = require("libraries.eventLib")
 local utils = require("libraries.gnui.utils")
 
 local debug_texture = textures:newTexture("gnui_debug_outline",3,3):fill(0,0,3,3,vectors.vec3(1,1,1)):setPixel(1,1,vectors.vec3(0,0,0))
@@ -11,19 +10,19 @@ local core = require("libraries.gnui.core")
 ---@field Dimensions Vector4          # Determins the offset of each side from the final output
 ---@field Z number                    # Offsets the container forward(+) or backward(-) if Z fighting is occuring, also affects its children.
 ---@field ContainmentRect Vector4     # The final output dimensions.
----@field DIMENSIONS_CHANGED EventLib # Triggered when the final container dimensions has changed.
----@field SIZE_CHANGED EventLib       # Triggered when the size of the final container dimensions is different from the last tick.
+---@field DIMENSIONS_CHANGED eventLib # Triggered when the final container dimensions has changed.
+---@field SIZE_CHANGED eventLib       # Triggered when the size of the final container dimensions is different from the last tick.
 ---@field Anchor Vector4              # Determins where to attach to its parent, (`0`-`1`, left-right, up-down)
----@field ANCHOR_CHANGED EventLib     # Triggered when the anchors applied to the container is changed.
+---@field ANCHOR_CHANGED eventLib     # Triggered when the anchors applied to the container is changed.
 ---@field Sprite Sprite               # the sprite that will be used for displaying textures.
----@field SPRITE_CHANGED EventLib     # Triggered when the sprite object set to this container has changed.
+---@field SPRITE_CHANGED eventLib     # Triggered when the sprite object set to this container has changed.
 ---@field Cursor Vector2?             # where the cursor will be from the top left of the final container dimensions.
----@field CURSOR_CHANGED EventLib     # Triggered when the Cursor set for this container changed
+---@field CURSOR_CHANGED eventLib     # Triggered when the Cursor set for this container changed
 ---@field Hovering boolean            # True when the cursor is hovering over it, compared with the parent container.
 ---@field CaptureCursor boolean       # if `true` will capture the cursor from its parent once `Hovering` over itself over the parent.
----@field PRESSED EventLib            # Triggered when `setCursor` is called with the press argument set to true
----@field MOUSE_ENTERED EventLib      # Triggered once the cursor is hovering over the container
----@field MOUSE_EXITED EventLib       # Triggered once the cursor leaves the confinement of this container.
+---@field PRESSED eventLib            # Triggered when `setCursor` is called with the press argument set to true
+---@field MOUSE_ENTERED eventLib      # Triggered once the cursor is hovering over the container
+---@field MOUSE_EXITED eventLib       # Triggered once the cursor leaves the confinement of this container.
 ---@field ClipOnParent boolean        # when `true`, the container will go invisible once touching outside the parent container.
 ---@field isClipping boolean          # `true` when the container is touching outside the parent's container.
 ---@field ModelPart ModelPart         # The `ModelPart` used to handle where to display debug features and the sprite.
@@ -39,13 +38,17 @@ container.__type = "GNUI.element.container"
 ---@param force_debug boolean?
 ---@return self
 function container.new(preset,force_debug)
-   local new = setmetatable(element.new(),container) ---@type GNUI.container
+   preset = preset or {}
+   ---@type GNUI.container
+---@diagnostic disable-next-line: assign-type-mismatch
+   local new = element.new()
+   setmetatable(new,container)
    new.Dimensions         = preset.Dimensions         or vectors.vec4(0,0,0,0) 
    new.Z                  = preset.Z                  or 0
    new.SIZE_CHANGED       = eventLib.new()
    new.ContainmentRect    = preset.ContainmentRect    or vectors.vec4() -- Dimensions but with margins and anchored applied
    new.Anchor             = preset.Anchor             or vectors.vec4(0,0,0,0)
-   new.ModelPart          = preset.ModelPart:copy("container"..new.id) or models:newPart("container"..new.id)
+   new.ModelPart          = preset.ModelPart and preset.ModelPart:copy("container"..new.id) or models:newPart("container"..new.id)
    new.Cursor             = preset.Cursor             or vectors.vec2() -- in local space
    new.Hovering           = preset.Hovering           or false
    new.CaptureCursor      = preset.CaptureCursor      or true
@@ -77,7 +80,6 @@ function container.new(preset,force_debug)
    new.VISIBILITY_CHANGED:register(function ()
       new.DIMENSIONS_CHANGED:invoke()
    end)
-
    new.DIMENSIONS_CHANGED:register(function ()
       local last_size = new.ContainmentRect.zw - new.ContainmentRect.xy
       -- generate the containment rect
@@ -154,6 +156,7 @@ function container.new(preset,force_debug)
             end
          end
       end
+      
    end,core.internal_events_name)
 
    new.CURSOR_CHANGED:register(function ()
@@ -190,19 +193,18 @@ function container.new(preset,force_debug)
    end,core.debug_event_name)
 
    new.PARENT_CHANGED:register(function ()
-      if new.Parent then
-         new.ModelPart:moveTo(new.Parent.ModelPart)
-      else
-         new.ModelPart:getParent():removeChild(new.ModelPart)
+      if new.Parent then new.ModelPart:moveTo(new.Parent.ModelPart)
+      else new.ModelPart:getParent():removeChild(new.ModelPart)
       end
       new.DIMENSIONS_CHANGED:invoke(new.Dimensions)
    end)
    return new
 end
 
-
 ---Sets the backdrop of the container.  
 ---note: the object dosent get applied directly, its duplicated and the clone is used instead of the original.
+---@generic self
+---@param self self
 ---@param sprite_obj Sprite
 ---@return self
 function container:setSprite(sprite_obj)
@@ -220,9 +222,12 @@ end
 
 
 ---Sets the flag if this container should go invisible once touching outside of its parent.
+---@generic self
+---@param self self
 ---@param clip any
 ---@return self
 function container:setClipOnParent(clip)
+   ---@cast self GNUI.container
    self.ClipOnParent = clip
    self.DIMENSIONS_CHANGED:invoke()
    return self
@@ -233,13 +238,17 @@ end
 ---x,y is top left
 ---z,w is bottom right  
 --- if Z or W is missing, they will use X and Y instead
----@overload fun(self : GNUI.container, vec4 : Vector4): GNUI.container
+
+---@generic self
+---@param self self
+---@overload fun(self : self, vec4 : Vector4): GNUI.container
 ---@param x number
 ---@param y number?
 ---@param w number?
 ---@param t number?
 ---@return self
 function container:setDimensions(x,y,w,t)
+   ---@cast self GNUI.container
    local new = utils.figureOutVec4(x,y,w or x,t or y)
    self.Dimensions = new
    self.DIMENSIONS_CHANGED:invoke(self.Dimensions)
@@ -247,20 +256,26 @@ function container:setDimensions(x,y,w,t)
 end
 
 ---Sets the top left offset from the origin anchor of its parent.
+---@generic self
+---@param self self
 ---@param xpos number|Vector2
 ---@param y number?
 ---@return self
 function container:setTopLeft(xpos,y)
+   ---@cast self GNUI.container
    self.Dimensions.xy = utils.figureOutVec2(xpos,y)
    self.DIMENSIONS_CHANGED:invoke(self.Dimensions)
    return self
 end
 
 ---Sets the bottom right offset from the origin anchor of its parent.
+---@generic self
+---@param self self
 ---@param xsize number|Vector2
 ---@param y number?
 ---@return self
 function container:setBottomRight(xsize,y)
+   ---@cast self GNUI.container
    self.Dimensions.zw = utils.figureOutVec2(xsize,y)
    self.DIMENSIONS_CHANGED:invoke(self.Dimensions)
    return self
@@ -271,6 +286,7 @@ end
 ---@param y number?
 ---@return self
 function container:offsetTopLeft(xpos,y)
+   ---@cast self GNUI.container
    local old,new = self.Dimensions.xy,utils.figureOutVec2(xpos,y)
    local delta = new-old
    self.Dimensions.xy,self.Dimensions.zw = new,self.Dimensions.zw - delta
@@ -283,6 +299,7 @@ end
 ---@param w number?
 ---@return self
 function container:offsetBottomRight(zpos,w)
+   ---@cast self GNUI.container
    local old,new = self.Dimensions.xy+self.Dimensions.zw,utils.figureOutVec2(zpos,w)
    local delta = new-old
    self.Dimensions.zw = self.Dimensions.zw + delta
@@ -295,6 +312,7 @@ end
 ---@param y number?
 ---@return boolean
 function container:isHovering(x,y)
+   ---@cast self GNUI.container
    local pos = utils.figureOutVec2(x,y)
    return (
           pos.x > 0
@@ -307,15 +325,27 @@ end
 ---Returns true if the cursor is hovering over the container.  
 ---@overload fun(vec2 : Vector2, press : boolean?): GNUI.container
 ---@overload fun(press : boolean): GNUI.container
+---@overload fun(): GNUI.container
 ---@param x number?
 ---@param y number?
 ---@param press boolean?
 ---@return boolean
 function container:setCursor(x,y,press)
+   local xt = type(x)
+   ---@cast self GNUI.container
    local pos
-   if type(x) == "boolean" and x then
+   if xt == "nil" then
+      self.Cursor = nil
+      self.Hovering = false
+      self.CURSOR_CHANGED:invoke()
+      for key, value in pairs(self.Children) do
+         value:setCursor(nil)
+      end
+      return false
+   elseif xt == "boolean" and x then
       press = true
       pos = self.Cursor
+      if not self.Cursor then return false end -- not selected at all
    else
       press = press or false
       pos = utils.figureOutVec2(x,y)
@@ -364,6 +394,7 @@ end
 ---@param depth number
 ---@return self
 function container:setZ(depth)
+   ---@cast self GNUI.container
    self.Z = depth
    self.DIMENSIONS_CHANGED:invoke(self.Dimensions)
    return self
@@ -373,6 +404,7 @@ end
 ---@param capture boolean
 ---@return self
 function container:setCanCaptureCursor(capture)
+   ---@cast self GNUI.container
    self.CaptureCursor = capture
    return self
 end
@@ -410,6 +442,7 @@ end
 --- 1 = top part of the container is fully anchored to the bottom of its parent
 ---@param units number?
 function container:setAnchorTop(units)
+   ---@cast self GNUI.container
    self.Anchor.y = units or 0
    self.DIMENSIONS_CHANGED:invoke(self.Dimensions)
    return self
@@ -420,6 +453,7 @@ end
 --- 1 = left part of the container is fully anchored to the right of its parent
 ---@param units number?
 function container:setAnchorLeft(units)
+   ---@cast self GNUI.container
    self.Anchor.x = units or 0
    self.DIMENSIONS_CHANGED:invoke(self.Dimensions)
    return self
@@ -430,6 +464,7 @@ end
 --- 1 = bottom part of the container is fully anchored to the bottom of its parent
 ---@param units number?
 function container:setAnchorDown(units)
+   ---@cast self GNUI.container
    self.Anchor.z = units or 0
    self.DIMENSIONS_CHANGED:invoke(self.Dimensions)
    return self
@@ -440,6 +475,7 @@ end
 --- 1 = right part of the container is fully anchored to the right of its parent  
 ---@param units number?
 function container:setAnchorRight(units)
+   ---@cast self GNUI.container
    self.Anchor.w = units or 0
    self.DIMENSIONS_CHANGED:invoke(self.Dimensions)
    return self
@@ -455,6 +491,7 @@ end
 ---@param right number?
 ---@param bottom number?
 function container:setAnchor(left,top,right,bottom)
+   ---@cast self GNUI.container
    self.Anchor = utils.figureOutVec4(left,top,right or left,bottom or top)
    self.DIMENSIONS_CHANGED:invoke(self.Dimensions)
    return self
