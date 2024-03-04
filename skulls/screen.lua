@@ -7,10 +7,11 @@ local apps = {}
 local default_app = "system:home"
 
 ---@class GNUI.TV.app
----@field TICK EventLib
----@field FRAME EventLib
----@field EXIT EventLib
+---@field TICK eventLib
+---@field FRAME eventLib
+---@field EXIT eventLib
 ---@field exit function
+---@field restart function
 
 ---@param ray_dir Vector3
 ---@param plane_dir Vector3
@@ -77,6 +78,15 @@ local function new(skull,events)
 
    local app_changed
    skull.data.APPS_CHANGED = eventLib.new()
+
+   local exit = function ()
+      skull.data.setApp(default_app)
+   end
+
+   local restart = function ()
+      skull.data.setApp(skull.data.current_app_id)
+   end
+
    function skull.data.setApp(id)
       if id then
          local is_same_app = id == skull.data.current_app_id
@@ -102,15 +112,14 @@ local function new(skull,events)
                screen:removeChild(death_screen)
             end
          end
-         local exit = function ()
-            skull.data.setApp(default_app)
-         end
+         
          ---@type GNUI.TV.app
          local app_event = {
             TICK  = eventLib.new(),
             FRAME = eventLib.new(),
             EXIT  = eventLib.new(),
-            exit = exit
+            exit = exit,
+            restart = restart,
          }
          skull.data.current_app_id = id
          math.randomseed(client:getSystemTime())
@@ -180,6 +189,8 @@ local function new(skull,events)
                math.map(lp.x,-r.z,r.x+1,0,size.x * 16),
                math.map(lp.y,-r.w,r.y+1,size.y * 16,0)
             )
+         else
+            screen:setCursor()
          end
       end
       if client:getViewer():getSwingTime() == 1 then
