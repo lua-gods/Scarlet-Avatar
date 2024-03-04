@@ -1,4 +1,4 @@
-local eventLib = require("libraries.eventHandler")
+local eventLib = require("libraries.eventLib")
 local utils = require("libraries.gnui.utils")
 
 local element_next_free = 0
@@ -8,10 +8,10 @@ local element_next_free = 0
 ---@field Parent GNUI.element|GNUI.container               
 ---@field Children table<any,GNUI.element|GNUI.container>  
 ---@field ChildIndex integer                               # the element's place order on its parent
----@field VISIBILITY_CHANGED EventLib                      # on change of visibility
+---@field VISIBILITY_CHANGED eventLib                      # on change of visibility
 ---@field CHILDREN_CHANGED table                           # when the order of the children changes.
 ---@field PARENT_CHANGED table                             # when the parent changes
----@field ON_FREE EventLib                                 # when the element is wiped from history.
+---@field ON_FREE eventLib                                 # when the element is wiped from history.
 local element = {}
 element.__index = function (t,i)
    return rawget(t,i)
