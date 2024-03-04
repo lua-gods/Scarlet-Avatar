@@ -10,6 +10,7 @@ local default_app = "system:home"
 ---@field TICK EventLib
 ---@field FRAME EventLib
 ---@field EXIT EventLib
+---@field exit function
 
 ---@param ray_dir Vector3
 ---@param plane_dir Vector3
@@ -40,7 +41,7 @@ end
 
 
 ---@param skull WorldSkull
----@param events SkullEvents
+---@param events GNUI.TV.app
 local function new(skull,events)
    local mat = matrices.mat4()
    mat
@@ -60,26 +61,46 @@ local function new(skull,events)
    local size = vectors.vec2(r.x+r.z+1,r.y+r.w+1)
    local screen = gnui.newContainer()
 
-   local startup
-   skull.data.apps = apps
+   local function slapanerror(err)
+      local err_label = gnui.newLabel()
+      err_label:setText({text=err,color="red"})
+      err_label:setFontScale(0.5)
+      err_label:setCanCaptureCursor(false):setAnchor(0,0,1,1):setCanCaptureCursor(true)
+      skull.data.current_app_screen:addChild(err_label)
+      local leave = gnui.newLabel():setText("[Leave]"):setDimensions(-40,-10,0,0)
+      leave.PRESSED:register(function ()
+         skull.data.setApp(default_app)
+      end)
+      leave:setAnchor(1,1)
+      skull.data.current_app_screen:addChild(leave)
+   end
+
+   local app_changed
    skull.data.APPS_CHANGED = eventLib.new()
    function skull.data.setApp(id)
       if id then
+         local is_same_app = id == skull.data.current_app_id
          if skull.data.current_app_screen then
             local death_screen = skull.data.current_app_screen
-            local death_id = skull.data.current_app_id
-            if id == default_app then
-               death_screen:setZ(8)
-            end
-            tween.tweenFunction(1,0,0.4,"inOutQuart",function (t)
-               if death_id ~= default_app then
-                  death_screen:setAnchor(math.lerp(skull.data.transition_origin_anchor or vectors.vec4(.5,.5,.5,.5),vectors.vec4(0,0,1,1),t))
-                  death_screen:setDimensions(math.lerp(skull.data.transition_origin_dim or vectors.vec4(),vectors.vec4(0,0,0,0),t))
+            if not is_same_app then
+               local death_id = skull.data.current_app_id
+               if id == default_app then
+                  death_screen:setZ(8)
                end
-            end,function ()
+               tween.tweenFunction(1,0,0.4,"inOutQuart",function (t)
+                  if death_id ~= default_app then
+                     death_screen:setAnchor(math.lerp(skull.data.transition_origin_anchor or vectors.vec4(.5,.5,.5,.5),vectors.vec4(0,0,1,1),t))
+                     death_screen:setDimensions(math.lerp(skull.data.transition_origin_dim or vectors.vec4(),vectors.vec4(0,0,0,0),t))
+                  end
+               end,function ()
+                  local ok, err = pcall(skull.data.current_app_events.EXIT.invoke,skull.data.current_app_events.EXIT)
+                  if not ok then slapanerror(err) end
+                  screen:removeChild(death_screen)
+               end)
+            else
                skull.data.current_app_events.EXIT:invoke()
                screen:removeChild(death_screen)
-            end)
+            end
          end
          local exit = function ()
             skull.data.setApp(default_app)
@@ -95,22 +116,29 @@ local function new(skull,events)
          math.randomseed(client:getSystemTime())
          local blank_sprite = gnui.newSprite():setTexture(textures["textures.endesga"]):setUV(0,0):setRenderType("EMISSIVE_SOLID")
          local app_screen = gnui.newContainer():setSprite(blank_sprite):setAnchor(0,0,1,1)
-         skull.data.current_app = apps[id].new(gnui,app_screen,app_event,skull)
+         local ok, err = pcall(apps[id].new,gnui,app_screen,app_event,skull)
+         skull.data.current_app = err
          skull.data.current_app_events = app_event
          skull.data.current_app_screen = app_screen
+         if not ok then slapanerror(err) end
 
          local birth_screen = skull.data.current_app_screen
-         if id ~= default_app then
-            birth_screen:setZ(8)
-         end
-         tween.tweenFunction(0,1,0.5,"inOutQuart",function (t)
+         if not is_same_app then
             if id ~= default_app then
-               birth_screen:setAnchor(math.lerp(skull.data.transition_origin_anchor or vectors.vec4(.5,.5,.5,.5),vectors.vec4(0,0,1,1),t))
-               birth_screen:setDimensions(math.lerp(skull.data.transition_origin_dim or vectors.vec4(),vectors.vec4(0,0,0,0),t))
+               birth_screen:setZ(8)
             end
-         end,function ()
-            birth_screen:setZ(0)
-         end)
+            tween.tweenFunction(0,1,0.5,"inOutQuart",function (t)
+               if id ~= default_app then
+                  birth_screen:setAnchor(math.lerp(skull.data.transition_origin_anchor or vectors.vec4(.5,.5,.5,.5),vectors.vec4(0,0,1,1),t))
+                  birth_screen:setDimensions(math.lerp(skull.data.transition_origin_dim or vectors.vec4(),vectors.vec4(0,0,0,0),t))
+               end
+            end,function ()
+               birth_screen:setZ(0)
+            end)
+         else
+            birth_screen:setAnchor(0,0,1,1)
+            birth_screen:setDimensions(0,0,0,0)
+         end
          screen:addChild(app_screen)
       end
    end
@@ -121,7 +149,7 @@ local function new(skull,events)
    :newPart("screen")
    :pos((-skull.dir * 1.51 + vectors.vec3(0.5,0.5,0.5)) * 16)
    :rot(0,skull.rot + 180)
-   :addChild(screen.Part)
+   :addChild(screen.ModelPart)
    
    screen:setDimensions(
       -r.z * 16 - 8,
@@ -133,7 +161,8 @@ local function new(skull,events)
    -- input processing
    events.TICK:register(function ()
       if skull.data.current_app_events then
-         skull.data.current_app_events.TICK:invoke()
+         local ok, err = pcall(skull.data.current_app_events.TICK.invoke,skull.data.current_app_events.TICK)
+         if not ok then slapanerror(err) end
       end
       local p = ray2plane(
          client:getCameraPos(),
@@ -160,18 +189,20 @@ local function new(skull,events)
 
    events.FRAME:register(function (dt,df)
       if skull.data.current_app_events then
-         skull.data.current_app_events.FRAME:invoke(dt,df)
+         local ok, err = pcall(skull.data.current_app_events.FRAME.invoke,skull.data.current_app_events.FRAME,dt,df)
+         if not ok then slapanerror(err) end
       end
    end)
    events.EXIT:register(function ()
       skull.data.startup = false
       if skull.data.current_app_events then
-         skull.data.current_app_events.EXIT:invoke()
+         pcall(skull.data.current_app_events.EXIT.invoke,skull.data.current_app_events.EXIT)
       end
    end)
 
    skull.data.startup = true
-   startup = function ()
+   app_changed = function ()
+      skull.data.apps = apps
       local default = default_app
       local meta = world.avatarVars()[client:getViewer():getUUID()]
       if meta and meta["gnui.force_app"] then
@@ -182,36 +213,53 @@ local function new(skull,events)
          skull.data.startup = false
       end
       skull.data.APPS_CHANGED:invoke()
+      if skull.data.current_app_id ~= default_app then
+         skull.data.setApp(skull.data.current_app_id)
+      end
    end
-   startup()
-   APPS_CHANGED:register(startup)
+   app_changed()
+   APPS_CHANGED:register(app_changed)
 end
 
+local function reloadApps()
+   apps = {}
+   for uuid, vars in pairs(world.avatarVars()) do
+      for key, data in pairs(vars) do
+         if key:match("^gnui%.app%..") then
+            local id = (uuid == avatar:getUUID() and 'system' or uuid) .. ':' .. data.name:lower()
+            apps[id] = {
+               id = id,
+               update = data.update,
+               name   = data.name,
+               new    = data.new,
+               icon   = data.icon,
+               icon_atlas_pos   = data.icon_atlas_pos,
+            }
+            --print("new app: " .. id)
+         end
+      end
+   end
+end
 
 local app_check_timer = 0
 events.WORLD_TICK:register(function ()
    app_check_timer = app_check_timer + 1
    if app_check_timer > 10 then
+      local update = false
       app_check_timer = 0
       for uuid, vars in pairs(world.avatarVars()) do
          for key, data in pairs(vars) do
             if key:match("^gnui%.app%..") then
                local id = (uuid == avatar:getUUID() and 'system' or uuid) .. ':' .. data.name:lower()
                if not apps[id] or (apps[id] and apps[id].update ~= data.update) then
-                  --register app
-                  apps[id] = {
-                     id = id,
-                     update = data.update,
-                     name   = data.name,
-                     new    = data.new,
-                     icon   = data.icon,
-                     icon_atlas_pos   = data.icon_atlas_pos,
-                  }
-                  --print("new app: " .. id)
-                  APPS_CHANGED:invoke()
+                  update = true
                end
             end
          end
+      end
+      if update then
+         reloadApps()
+         APPS_CHANGED:invoke()
       end
    end
 end)
