@@ -67,18 +67,18 @@ local httpErrors = {
 [511] = "Network Authentication Required",
 }
 
-local errr
-local wallpaper_ready = false
-local link = "https://raw.githubusercontent.com/lua-gods/Scarlet-Avatar/main/textures/.src/vector_forest.png"
-http.get(link,
-function (result, err)
-   if err then
-      errr = err .. " " .. (httpErrors[err] or "")
-   else
-      textures:read("wallpaper",result)
-   end
-   wallpaper_ready = true
-end,"base64")
+--local errr
+--local wallpaper_ready = false
+--local link = "https://raw.githubusercontent.com/lua-gods/Scarlet-Avatar/main/textures/.src/vector_forest.png"
+--http.get(link,
+--function (result, err)
+--   if err then
+--      errr = err .. " " .. (httpErrors[err] or "")
+--   else
+--      textures:read("wallpaper",result)
+--   end
+--   wallpaper_ready = true
+--end,"base64")
 
 ---@param gnui GNUI
 ---@param events GNUI.TV.app
@@ -86,42 +86,45 @@ end,"base64")
 ---@param skull WorldSkull
 local function new(gnui,screen,events,skull)
    local size = skull.data.tv_size
+   local row_count = math.floor(((size.x * 16) / 24))
    events.TICK:register(function ()
    end)
-   local wallpaper = gnui.newSprite():setTexture(textures:newTexture("1x1black",1,1):setPixel(0,0,vectors.vec3(0,0,0))):setUV(1,0):setRenderType("EMISSIVE_SOLID")
-   events.FRAME:register(function ()
-      if wallpaper_ready then
-         screen:setSprite(wallpaper)
-         
-         local err_link = gnui.newLabel():setAlign(0.5,0.6)
-         if errr then
-            local err_label = gnui.newLabel():setAlign(0.5,0.5)
-            err_link:setText({text=link,color="red"}):setFontScale(0.25)
-            if not httpErrors[errr] then
-               err_label:setText({text="Link Not Allowed",color="red"})
-            else
-               err_label:setText({text=errr,color="red"})
-               err_label:canCaptureCursor(false)
-            end
-            screen:addChild(err_label:setAnchor(0,0,1,1))
-            screen:addChild(err_link:setAnchor(0,0,1,1))
-         else
-            local dim = textures.wallpaper:getDimensions()
-            local r1,r2 = (dim.x / dim.y),
-            (size.x / size.y)
-            wallpaper:setTexture(textures.wallpaper):setColor(0,0,0)
-            tween.tweenFunction(0,1,1.5,"inOutCubic",function (value, transition)
-               wallpaper:setColor(value,value,value)
-            end)
-            events.TICK:register(function ()
-               local o = (0.2 + (math.sin(client:getSystemTime() / 10000)) * 0.1 * 0.5 + 0.5) * ((r1 - r2) * dim.y)
-               wallpaper:setUV(o,0,(dim.x-1) / r1 * r2 + o,dim.y-1)
-            end)
-         end
-         events.FRAME:remove("wallwait")
-      end
-   end,"wallwait")
 
+   local wallpaper = gnui.newSprite():setRenderType("EMISSIVE_SOLID")
+   wallpaper:setTexture(textures["textures.firewatch_pixelated"])
+   screen:setSprite(wallpaper)
+   --events.FRAME:register(function ()
+   --   if wallpaper_ready then
+   --      screen:setSprite(wallpaper)
+   --      
+   --      local err_link = gnui.newLabel():setAlign(0.5,0.6):canCaptureCursor(false)
+   --      if errr then
+   --         local err_label = gnui.newLabel():setAlign(0.5,0.5):canCaptureCursor(false)
+   --         err_link:setText({text=link,color="red"}):setFontScale(0.25)
+   --         if not httpErrors[errr] then
+   --            err_label:setText({text="Link Not Allowed",color="red"})
+   --         else
+   --            err_label:setText({text=errr,color="red"})
+   --            err_label:canCaptureCursor(false)
+   --         end
+   --         screen:addChild(err_label:setAnchor(0,0,1,1))
+   --         screen:addChild(err_link:setAnchor(0,0,1,1))
+   --      else
+   --         local dim = textures.wallpaper:getDimensions()
+   --         local r1,r2 = (dim.x / dim.y),
+   --         (size.x / size.y)
+   --         wallpaper:setTexture(textures.wallpaper):setColor(0,0,0)
+   --         tween.tweenFunction(0,1,1.5,"inOutCubic",function (value, transition)
+   --            wallpaper:setColor(value,value,value)
+   --         end)
+   --         events.TICK:register(function ()
+   --            local o = (0.2 + (math.sin(client:getSystemTime() / 10000)) * 0.1 * 0.5 + 0.5) * ((r1 - r2) * dim.y)
+   --            wallpaper:setUV(o,0,(dim.x-1) / r1 * r2 + o,dim.y-1)
+   --         end)
+   --      end
+   --      events.FRAME:remove("wallwait")
+   --   end
+   --end,"wallwait")
 
    local app_list
    local function updateList()
@@ -138,16 +141,16 @@ local function new(gnui,screen,events,skull)
          spritecon:setTexture(app.icon)
          if app.icon_atlas_pos then
             spritecon:setUV(
-               app.icon_atlas_pos.x*32,
-               app.icon_atlas_pos.y*32,
-               app.icon_atlas_pos.x*32+31,
-               app.icon_atlas_pos.y*32+31)
+               app.icon_atlas_pos.x*10,
+               app.icon_atlas_pos.y*10,
+               app.icon_atlas_pos.x*10+9,
+               app.icon_atlas_pos.y*10+9)
          end
 
          local icon = gnui.newContainer()
          icon:setSprite(spritecon)
          icon:setAnchor(0.2,0.2,0.8,0.8)
-         icon:canCaptureCursor(false)
+         icon:setCanCaptureCursor(false)
          icontainer:addChild(icon)
 
          local name = gnui.newLabel()
@@ -157,9 +160,10 @@ local function new(gnui,screen,events,skull)
          name:setDimensions(0,-4,0,4)
          name:setFontScale(math.min(1/client.getTextWidth(app.name) * 24,0.4))
          name:setTextEffect("NONE")
-         name:canCaptureCursor(false)
+         name:setCanCaptureCursor(false)
 
-         icontainer:setDimensions(i* 24,0,24+i* 24,24)
+         local pos = vectors.vec2(i % row_count,math.floor(i / row_count))
+         icontainer:setDimensions(pos.x * 24,pos.y * 24,(pos.x+1) * 24,(pos.y+1) * 24)
          i = i + 1
          icontainer:addChild(name)
          app_list:addChild(icontainer)
@@ -177,12 +181,12 @@ local function new(gnui,screen,events,skull)
       skull.data.APPS_CHANGED:remove(skull.i)
    end)
    local clockLabel = gnui.newLabel()
-   clockLabel:setText('time'):canCaptureCursor(false)
+   clockLabel:setText('time'):setCanCaptureCursor(false)
    clockLabel:setAlign(1, 1):setAnchor(0.5, 0.5, 1, 1):setDimensions(-4, -14)
    clockLabel:setFontScale(2)
    screen:addChild(clockLabel)
    local dateLabel = gnui.newLabel()
-   dateLabel:setText('date'):canCaptureCursor(false)
+   dateLabel:setText('date'):setCanCaptureCursor(false)
    dateLabel:setAlign(1, 1):setAnchor(1, 1, 1, 1):setDimensions(-1000, -20,0,0)
    screen:addChild(dateLabel)
    events.TICK:register(function()
