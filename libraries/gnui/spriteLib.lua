@@ -1,27 +1,28 @@
 
 local default_texture = textures:newTexture("1x1white",1,1):setPixel(0,0,vectors.vec3(1,1,1))
-local eventLib = require("libraries.eventHandler")
+local eventLib = require("libraries.eventLib")
 local utils = require("libraries.gnui.utils")
 local core = require("libraries.gnui.core")
 
 
 ---@class Sprite
 ---@field Texture Texture
----@field TEXTURE_CHANGED EventLib
+---@field TEXTURE_CHANGED eventLib
 ---@field Modelpart ModelPart?
----@field MODELPART_CHANGED EventLib
+---@field MODELPART_CHANGED eventLib
 ---@field UV Vector4
 ---@field Size Vector2
 ---@field Position Vector3
 ---@field Color Vector3
 ---@field Scale number
----@field DIMENSIONS_CHANGED EventLib
+---@field DIMENSIONS_CHANGED eventLib
 ---@field RenderTasks table<any,SpriteTask>
 ---@field RenderType ModelPart.renderType
 ---@field BorderThickness Vector4
----@field BORDER_THICKNESS_CHANGED EventLib
+---@field BORDER_THICKNESS_CHANGED eventLib
 ---@field ExcludeMiddle boolean
 ---@field Visible boolean
+---@field protected texture_applied boolean
 ---@field id integer
 local sprite = {}
 sprite.__index = sprite
@@ -31,29 +32,29 @@ local sprite_next_free = 0
 function sprite.new(obj)
    local new = obj or {}
    setmetatable(new,sprite)
-   new.Texture = new.Texture or default_texture
-   new.TEXTURE_CHANGED = eventLib.new()
-   new.MODELPART_CHANGED = eventLib.new()
-   new.Position = new.Position or vectors.vec3()
-   new.UV = new.UV or vectors.vec4(0,0,1,1)
-   new.Size = new.Size or vectors.vec2(16,16)
-   new.Color = new.Color or vectors.vec3(1,1,1)
-   new.Scale = new.Scale or 1
-   new.DIMENSIONS_CHANGED = eventLib.new()
-   new.RenderTasks = {}
-   new.RenderType = new.RenderType or "CUTOUT_EMISSIVE_SOLID"
-   new.BorderThickness = new.BorderThickness or vectors.vec4(0,0,0,0)
+   new.Texture                  = new.Texture         or default_texture
+   new.TEXTURE_CHANGED          = eventLib.new()
+   new.MODELPART_CHANGED        = eventLib.new()
+   new.Position                 = new.Position        or vectors.vec3()
+   new.UV                       = new.UV              or vectors.vec4(0,0,1,1)
+   new.Size                     = new.Size            or vectors.vec2(16,16)
+   new.Color                    = new.Color           or vectors.vec3(1,1,1)
+   new.Scale                    = new.Scale           or 1
+   new.DIMENSIONS_CHANGED       = eventLib.new()
+   new.RenderTasks              = {}
+   new.RenderType               = new.RenderType      or "CUTOUT_EMISSIVE_SOLID"
+   new.BorderThickness          = new.BorderThickness or vectors.vec4(0,0,0,0)
    new.BORDER_THICKNESS_CHANGED = eventLib.new()
-   new.ExcludeMiddle = new.ExcludeMiddle or false
-   new.Cursor = vectors.vec2()
-   new.CURSOR_CHANGED = eventLib.new()
-   new.Visible = true
-   new.id = new.id or sprite_next_free
+   new.ExcludeMiddle            = new.ExcludeMiddle   or false
+   new.Cursor                   = vectors.vec2()
+   new.CURSOR_CHANGED           = eventLib.new()
+   new.Visible                  = true
+   new.texture_applied          = false
+   new.id                       = new.id              or sprite_next_free
    sprite_next_free = sprite_next_free + 1
    
    new.TEXTURE_CHANGED:register(function ()
-      new:_deleteRenderTasks()
-      new:_buildRenderTasks()
+      new:_applyTexture()
       new:_updateRenderTasks()
    end,core.internal_events_name)
 
@@ -107,7 +108,7 @@ function sprite:setPos(xpos,y,depth)
 end
 
 ---Tints the Sprite multiplicatively
----@overload fun(rgb : Vector3): Sprite
+---@overload fun(self : self, rgb : Vector3): Sprite
 ---@param r number
 ---@param g number
 ---@param b number
@@ -233,11 +234,12 @@ function sprite:copy()
 end
 
 function sprite:setVisible(visibility)
-   self:_updateRenderTasks()
+   sprite:_applyVisibility()
    self.Visible = visibility
    return self
 end
 
+---@return self
 function sprite:_deleteRenderTasks()
    for _, task in pairs(self.RenderTasks) do
       self.Modelpart:removeTask(task:getName())
@@ -245,31 +247,165 @@ function sprite:_deleteRenderTasks()
    return self
 end
 
+---@protected
+---@return self
+function sprite:_applyMisc()
+   if not self.Modelpart or not self.Texture then return self end
+   for _, task in pairs(self.RenderTasks) do
+      task
+      :setColor(self.Color)
+      :setRenderType(self.RenderType)
+   end
+   return self
+end
+
+---@protected
+---@return self
 function sprite:_buildRenderTasks()
-   if not self.Modelpart then return self end
+   if not self.Modelpart or not self.Texture then return self end
    local b = self.BorderThickness
    local d = self.Texture:getDimensions()
    self.is_ninepatch = not (b.x == 0 and b.y == 0 and b.z == 0 and b.w == 0)
    if not self.is_ninepatch then -- not 9-Patch
-      self.RenderTasks[1] = self.Modelpart:newSprite("patch"..self.id):setTexture(self.Texture,d.x,d.y)
+      self.RenderTasks[1] = self.Modelpart:newSprite("patch"..self.id)
    else
       self.RenderTasks = {
-         self.Modelpart:newSprite("patch_tl"..self.id):setTexture(self.Texture,d.x,d.y),
-         self.Modelpart:newSprite("patch_t" ..self.id):setTexture(self.Texture,d.x,d.y),
-         self.Modelpart:newSprite("patch_tr"..self.id):setTexture(self.Texture,d.x,d.y),
-         self.Modelpart:newSprite("patch_ml"..self.id):setTexture(self.Texture,d.x,d.y),
-         self.Modelpart:newSprite("patch_m" ..self.id):setTexture(self.Texture,d.x,d.y),
-         self.Modelpart:newSprite("patch_mr"..self.id):setTexture(self.Texture,d.x,d.y),
-         self.Modelpart:newSprite("patch_bl"..self.id):setTexture(self.Texture,d.x,d.y),
-         self.Modelpart:newSprite("patch_b" ..self.id):setTexture(self.Texture,d.x,d.y),
-         self.Modelpart:newSprite("patch_br"..self.id):setTexture(self.Texture,d.x,d.y),
+         self.Modelpart:newSprite("patch_tl"..self.id),
+         self.Modelpart:newSprite("patch_t" ..self.id),
+         self.Modelpart:newSprite("patch_tr"..self.id),
+         self.Modelpart:newSprite("patch_ml"..self.id),
+         self.Modelpart:newSprite("patch_m" ..self.id),
+         self.Modelpart:newSprite("patch_mr"..self.id),
+         self.Modelpart:newSprite("patch_bl"..self.id),
+         self.Modelpart:newSprite("patch_b" ..self.id),
+         self.Modelpart:newSprite("patch_br"..self.id),
       }
    end
-   self:_updateRenderTasks()
+   self:_applyTexture()
+   return self
+end
+
+---@protected
+---@return self
+function sprite:_applyTexture()
+   if not self.Modelpart or not self.Texture then return self end
+   local d = self.Texture:getDimensions()
+   for _, task in pairs(self.RenderTasks) do
+      task:setTexture(self.Texture,d.x,d.y)
+   end
+   local res = self.Texture:getDimensions()
+   local uv = self.UV:copy():add(0,0,1,1)
+   if not self.is_ninepatch then
+      self.RenderTasks[1]
+      :setColor(self.Color)
+      :setRenderType(self.RenderType)
+      :setUVPixels(
+         uv.x,
+         uv.y
+      ):region(
+         uv.z-uv.x,
+         uv.w-uv.y
+      )
+   else
+      local border = self.BorderThickness             --border, used in UVs
+      local uvsize = vectors.vec2(uv.z-uv.x,uv.w-uv.y)
+      self.RenderTasks[1]:setUVPixels(
+         uv.x,
+         uv.y
+      ):region(
+         border.x,
+         border.y
+      )
+      
+      self.RenderTasks[2]:setUVPixels(
+         uv.x+border.x,
+         uv.y
+      ):region(
+         uvsize.x-border.x-border.z,
+         border.y
+      )
+
+      self.RenderTasks[3]:setUVPixels(
+         uv.z-border.z,
+         uv.y
+      ):region(
+         border.z,
+         border.y
+      )
+
+      self.RenderTasks[4]:setUVPixels(
+         uv.x,
+         uv.y+border.y
+      ):region(
+         border.x,
+         uvsize.y-border.y-border.w
+      )
+      if not self.ExcludeMiddle then
+         self.RenderTasks[5]:setUVPixels(
+            uv.x+border.x,
+            uv.y+border.y
+         ):region(
+            uvsize.x-border.x-border.z,
+            uvsize.y-border.y-border.w
+         )
+      else
+         self.RenderTasks[5]:setVisible(false)
+      end
+
+      self.RenderTasks[6]:setUVPixels(
+         uv.z-border.z,
+         uv.y+border.y
+      ):region(
+         border.z,
+         uvsize.y-border.y-border.w
+      )
+      
+      
+      self.RenderTasks[7]:setUVPixels(
+         uv.x,
+         uv.w-border.w
+      ):region(
+         border.x,
+         border.w
+      )
+
+      self.RenderTasks[8]
+      :setUVPixels(
+         uv.x+border.x,
+         uv.w-border.w
+      ):region(
+         uvsize.x-border.x-border.z,
+         border.w
+      )
+
+      self.RenderTasks[9]
+      :setUVPixels(
+         uv.z-border.z,
+         uv.w-border.w
+      ):region(
+         border.z,
+         border.w
+      )
+   end
+   return self
+end
+
+---@protected
+---@return self
+function sprite:_applyVisibility()
+   if not self.Modelpart then return self end
+   for _, task in pairs(self.RenderTasks) do
+      task:setVisible(self.Visible)
+   end
+   return self
 end
 
 function sprite:_updateRenderTasks()
    if not self.Modelpart then return self end
+   if not self.texture_applied then
+      self:_applyTexture()
+      self.texture_applied = true
+   end
    local res = self.Texture:getDimensions()
    local uv = self.UV:copy():add(0,0,1,1)
    if not self.is_ninepatch then
@@ -284,13 +420,11 @@ function sprite:_updateRenderTasks()
       ):region(
          uv.z-uv.x,
          uv.w-uv.y
-      ):setVisible(self.Visible)
+      )
    else
       local sborder = self.BorderThickness*self.Scale --scaled border, used in rendering
-      local border = self.BorderThickness             --border, used in UVs
       local pos = self.Position
       local size = self.Size
-      local uvsize = vectors.vec2(uv.z-uv.x,uv.w-uv.y)
       for _, task in pairs(self.RenderTasks) do
          task
          :setColor(self.Color)
@@ -301,14 +435,7 @@ function sprite:_updateRenderTasks()
          pos
       ):setScale(
          sborder.x/res.x,
-         sborder.y/res.y
-      ):setUVPixels(
-         uv.x,
-         uv.y
-      ):region(
-         border.x,
-         border.y
-      ):setVisible(self.Visible)
+         sborder.y/res.y)
       
       self.RenderTasks[2]
       :setPos(
@@ -317,14 +444,7 @@ function sprite:_updateRenderTasks()
          pos.z
       ):setScale(
          (size.x-sborder.z-sborder.x)/res.x,
-         sborder.y/res.y
-      ):setUVPixels(
-         uv.x+border.x,
-         uv.y
-      ):region(
-         uvsize.x-border.x-border.z,
-         border.y
-      ):setVisible(self.Visible)
+         sborder.y/res.y)
 
       self.RenderTasks[3]
       :setPos(
@@ -332,14 +452,7 @@ function sprite:_updateRenderTasks()
          pos.y,
          pos.z
       ):setScale(
-         sborder.z/res.x,sborder.y/res.y
-      ):setUVPixels(
-         uv.z-border.z,
-         uv.y
-      ):region(
-         border.z,
-         border.y
-      ):setVisible(self.Visible)
+         sborder.z/res.x,sborder.y/res.y)
 
       self.RenderTasks[4]
       :setPos(
@@ -349,13 +462,7 @@ function sprite:_updateRenderTasks()
       ):setScale(
          sborder.x/res.x,
          (size.y-sborder.y-sborder.w)/res.y
-      ):setUVPixels(
-         uv.x,
-         uv.y+border.y
-      ):region(
-         border.x,
-         uvsize.y-border.y-border.w
-      ):setVisible(self.Visible)
+      )
       if not self.ExcludeMiddle then
          self.RenderTasks[5]
          :setPos(
@@ -366,13 +473,7 @@ function sprite:_updateRenderTasks()
          :setScale(
             (size.x-sborder.x-sborder.z)/res.x,
             (size.y-sborder.y-sborder.w)/res.y
-         ):setUVPixels(
-            uv.x+border.x,
-            uv.y+border.y
-         ):region(
-            uvsize.x-border.x-border.z,
-            uvsize.y-border.y-border.w
-         ):setVisible(self.Visible)
+         )
       else
          self.RenderTasks[5]:setVisible(false)
       end
@@ -386,13 +487,7 @@ function sprite:_updateRenderTasks()
       :setScale(
          sborder.z/res.x,
          (size.y-sborder.y-sborder.w)/res.y
-      ):setUVPixels(
-         uv.z-border.z,
-         uv.y+border.y
-      ):region(
-         border.z,
-         uvsize.y-border.y-border.w
-      ):setVisible(self.Visible)
+      )
       
       
       self.RenderTasks[7]
@@ -404,13 +499,7 @@ function sprite:_updateRenderTasks()
       :setScale(
          sborder.x/res.x,
          sborder.w/res.y
-      ):setUVPixels(
-         uv.x,
-         uv.w-border.w
-      ):region(
-         border.x,
-         border.w
-      ):setVisible(self.Visible)
+      )
 
       self.RenderTasks[8]
       :setPos(
@@ -420,13 +509,7 @@ function sprite:_updateRenderTasks()
       ):setScale(
          (size.x-sborder.z-sborder.x)/res.x,
          sborder.w/res.y
-      ):setUVPixels(
-         uv.x+border.x,
-         uv.w-border.w
-      ):region(
-         uvsize.x-border.x-border.z,
-         border.w
-      ):setVisible(self.Visible)
+      )
 
       self.RenderTasks[9]
       :setPos(
@@ -436,14 +519,9 @@ function sprite:_updateRenderTasks()
       ):setScale(
          sborder.z/res.x,
          sborder.w/res.y
-      ):setUVPixels(
-         uv.z-border.z,
-         uv.w-border.w
-      ):region(
-         border.z,
-         border.w
-      ):setVisible(self.Visible)
+      )
    end
+   return self
 end
 
 return sprite
