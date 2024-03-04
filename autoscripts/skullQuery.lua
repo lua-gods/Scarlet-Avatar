@@ -2,9 +2,9 @@ local skull_handler = require("autoscripts.skullHandler")
 local eventLib = require("libraries.eventLib")
 
 ---@class SkullEvents
----@field TICK EventLib
----@field FRAME EventLib
----@field EXIT EventLib
+---@field TICK eventLib
+---@field FRAME eventLib
+---@field EXIT eventLib
 
 local queries = listFiles("skulls")
 local last_resort = "skulls.default"
