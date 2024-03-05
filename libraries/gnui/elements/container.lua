@@ -342,13 +342,17 @@ function container:setCursor(x,y,press)
          value:setCursor(nil)
       end
       return false
-   elseif xt == "boolean" and x then
+   elseif self.Cursor and xt == "boolean" and x then
       press = true
       pos = self.Cursor
       if not self.Cursor then return false end -- not selected at all
    else
       press = press or false
-      pos = utils.figureOutVec2(x,y)
+      if x and y then
+         pos = utils.figureOutVec2(x,y)
+      else
+         return false
+      end
    end
    local lhovering = self.Hovering
    self.Cursor = pos
