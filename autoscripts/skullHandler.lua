@@ -22,8 +22,9 @@ instead of individually rendering each one,saving performance.
 ---@field rot number
 ---@field dir Vector3
 ---@field offset_model Vector3
+local world_skull = {}
 
----@type table<any,WorldSkull>
+---@type table<string,WorldSkull>
 local skulls = {}
 local eventLib = require("libraries.eventLib")
 
@@ -69,6 +70,15 @@ for i = 0, 15, 1 do
    lookup.rot.floor[tostring(i)] = angle
 end
 
+
+
+
+function world_skull:reload()
+   self.model_block:remove()
+   skulls[self.id] = nil
+end
+
+
 local systime = client:getSystemTime() / 1000
 local order = 0
 local king_pos
@@ -77,7 +87,7 @@ events.SKULL_RENDER:register(function(delta, block, item, entity, context)
    if block then
       inviskull:setVisible(true)
       local pos = block:getPos()
-      local id = pos.x..","..pos.y..","..pos.z
+      local id = tostring(pos)
       
       if skulls[id] then
          skulls[id].order = order
@@ -102,7 +112,9 @@ events.SKULL_RENDER:register(function(delta, block, item, entity, context)
          local part_block = worldPart:newPart(id)
          local part = part_block:newPart("partBlock")
          next_free = next_free + 1
-         skulls[id] = {
+
+         ---@type WorldSkull
+         skulls[id] = setmetatable({
             data = {},
             i = next_free,
             id = id,
@@ -116,7 +128,7 @@ events.SKULL_RENDER:register(function(delta, block, item, entity, context)
             rot = rot,
             last_seen = systime,
             offset_model = offset,
-         }
+         }, {__index = world_skull})
          part_block:setPos(pos * 16)
          part:pos(offset):rot(0,rot,0)
          api.INIT:invoke(skulls[id])

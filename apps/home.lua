@@ -180,6 +180,7 @@ local function new(gnui,screen,events,skull)
    events.EXIT:register(function ()
       skull.data.APPS_CHANGED:remove(skull.id)
    end)
+
    local clockLabel = gnui.newLabel()
    clockLabel:setText('time'):setCanCaptureCursor(false)
    clockLabel:setAlign(1, 1):setAnchor(0.5, 0.5, 1, 1):setDimensions(-4, -14)

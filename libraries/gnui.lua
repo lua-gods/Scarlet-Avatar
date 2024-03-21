@@ -26,4 +26,5 @@ api.newContainer = container.new
 api.newLabel = label.new
 api.utils = utils
 api.newSprite = sprite.new
+api.VERSION = "v3.3.0"
 return api

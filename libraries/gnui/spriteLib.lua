@@ -7,50 +7,55 @@ local core = require("libraries.gnui.core")
 
 ---@class Sprite
 ---@field Texture Texture
----@field TEXTURE_CHANGED eventLib
 ---@field Modelpart ModelPart?
----@field MODELPART_CHANGED eventLib
 ---@field UV Vector4
 ---@field Size Vector2
 ---@field Position Vector3
 ---@field Color Vector3
 ---@field Scale number
----@field DIMENSIONS_CHANGED eventLib
 ---@field RenderTasks table<any,SpriteTask>
 ---@field RenderType ModelPart.renderType
 ---@field BorderThickness Vector4
----@field BORDER_THICKNESS_CHANGED eventLib
 ---@field ExcludeMiddle boolean
 ---@field Visible boolean
+---@field TEXTURE_CHANGED eventLib
+---@field MODELPART_CHANGED eventLib
+---@field DIMENSIONS_CHANGED eventLib
+---@field BORDER_THICKNESS_CHANGED eventLib
 ---@field protected texture_applied boolean
 ---@field id integer
 local sprite = {}
 sprite.__index = sprite
 
 local sprite_next_free = 0
+---@param texture Texture?
+---@param UVx number?
+---@param UVy number?
+---@param UVz number?
+---@param UVw number?
 ---@return Sprite
-function sprite.new(obj)
-   local new = obj or {}
+function sprite.new(texture,UVx,UVy,UVz,UVw)
+   local new = {}
    setmetatable(new,sprite)
-   new.Texture                  = new.Texture         or default_texture
+   new.Texture                  = texture or default_texture
    new.TEXTURE_CHANGED          = eventLib.new()
    new.MODELPART_CHANGED        = eventLib.new()
-   new.Position                 = new.Position        or vectors.vec3()
-   new.UV                       = new.UV              or vectors.vec4(0,0,1,1)
-   new.Size                     = new.Size            or vectors.vec2(16,16)
-   new.Color                    = new.Color           or vectors.vec3(1,1,1)
-   new.Scale                    = new.Scale           or 1
+   new.Position                 = vectors.vec3()
+   new.UV                       = vectors.vec4(UVx or 0, UVy or 0, UVz or 1, UVw or 1)
+   new.Size                     = vectors.vec2(16,16)
+   new.Color                    = vectors.vec3(1,1,1)
+   new.Scale                    = 1
    new.DIMENSIONS_CHANGED       = eventLib.new()
    new.RenderTasks              = {}
-   new.RenderType               = new.RenderType      or "CUTOUT_EMISSIVE_SOLID"
-   new.BorderThickness          = new.BorderThickness or vectors.vec4(0,0,0,0)
+   new.RenderType               = "CUTOUT_EMISSIVE_SOLID"
+   new.BorderThickness          = vectors.vec4(0,0,0,0)
    new.BORDER_THICKNESS_CHANGED = eventLib.new()
-   new.ExcludeMiddle            = new.ExcludeMiddle   or false
+   new.ExcludeMiddle            = false
    new.Cursor                   = vectors.vec2()
    new.CURSOR_CHANGED           = eventLib.new()
    new.Visible                  = true
    new.texture_applied          = false
-   new.id                       = new.id              or sprite_next_free
+   new.id                       = sprite_next_free
    sprite_next_free = sprite_next_free + 1
    
    new.TEXTURE_CHANGED:register(function ()
@@ -222,15 +227,22 @@ function sprite:excludeMiddle(toggle)
    return self
 end
 
-function sprite:copy()
-   local copy = {}
-   for key, value in pairs(self) do
-      if type(value):find("Vector") then
-         value = value:copy()
-      end
-      copy[key] = value
-   end
-   return sprite.new(copy)
+
+---Copies the given source, except the events
+---@param s Sprite
+function sprite:copy(s)
+   self:setTexture(s.Texture)
+   self:setUV(s.UV.x,s.UV.y,s.UV.z,s.UV.w)
+   self:setPos(s.Position.x,s.Position.y,s.Position.z)
+   self:setColor(s.Color.x,s.Color.y,s.Color.z)
+   self:setScale(s.Scale)
+   self:setBorderThickness(s.BorderThickness.x,s.BorderThickness.y,s.BorderThickness.z,s.BorderThickness.w)
+   return self
+end
+
+function sprite:duplicate()
+   local clone = self.new():copy(self)
+   return clone
 end
 
 function sprite:setVisible(visibility)
@@ -264,7 +276,6 @@ end
 function sprite:_buildRenderTasks()
    if not self.Modelpart or not self.Texture then return self end
    local b = self.BorderThickness
-   local d = self.Texture:getDimensions()
    self.is_ninepatch = not (b.x == 0 and b.y == 0 and b.z == 0 and b.w == 0)
    if not self.is_ninepatch then -- not 9-Patch
       self.RenderTasks[1] = self.Modelpart:newSprite("patch"..self.id)

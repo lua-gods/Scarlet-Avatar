@@ -39,8 +39,6 @@ local function check(pos,block)
    return world.getBlockState(pos).id == block
 end
 
-
-
 ---@param skull WorldSkull
 ---@param events GNUI.TV.app
 local function new(skull,events)
@@ -95,7 +93,7 @@ local function new(skull,events)
             if not is_same_app then
                local death_id = skull.data.current_app_id
                if id == default_app then
-                  death_screen:setZ(8)
+                  death_screen:setZ(2)
                end
                tween.tweenFunction(1,0,0.4,"inOutQuart",function (t)
                   if death_id ~= default_app then
@@ -228,7 +226,6 @@ local function new(skull,events)
          skull.data.setApp(skull.data.current_app_id)
       end
    end
-   app_changed()
    APPS_CHANGED:register(app_changed)
 end
 

@@ -55,12 +55,12 @@ local function new(gnui,screen,events,skull)
          screen:addChild(button)
          grid_button[#grid_button+1] = button
          if x == 4 then
-            button:setSprite(accent2:copy())
+            button:setSprite(accent2:duplicate())
          else
             if y == 5 then
-               button:setSprite(accent3:copy())
+               button:setSprite(accent3:duplicate())
             else
-               button:setSprite(accent1:copy())
+               button:setSprite(accent1:duplicate())
             end
          end
          button.PRESSED:register(function ()

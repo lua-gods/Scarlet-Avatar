@@ -11,6 +11,23 @@ local last_resort = "skulls.default"
 local query_checks = {}
 local skulls = {}
 
+local function checkFor(skull)
+   local api = {
+      TICK = eventLib.new(),
+      FRAME = eventLib.new(),
+      EXIT = eventLib.new()
+   }
+   for key, value in pairs(query_checks) do
+      local result = value(skull) -- query check
+      if result then
+         result(skull,api,skull_handler.skulls)
+         break
+      end
+   end
+   skull.data.api = api
+   return {skull=skull,api=api}
+end
+
 for _, path in pairs(queries) do
    if last_resort ~= path then
       query_checks[#query_checks+1] = require(path)
@@ -20,19 +37,7 @@ query_checks[#query_checks+1] = require(last_resort)
 
 ---@param skull WorldSkull
 skull_handler.INIT:register(function (skull)
-   local api = {
-      TICK = eventLib.new(),
-      FRAME = eventLib.new(),
-      EXIT = eventLib.new()
-   }
-   for key, value in pairs(query_checks) do
-      local result = value(skull) -- query check
-      if result then
-         result(skull,api)
-         break
-      end
-   end
-   skulls[skull.pos] = {skull=skull,api=api}
+   skulls[skull.pos] = checkFor(skull)
 end)
 
 ---@param skull WorldSkull

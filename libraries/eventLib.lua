@@ -12,6 +12,7 @@ local eventlib = {}
 ---@field event eventLib
 local Listener = {}
 Listener.__index = Listener
+Listener.__type = "Listener"
 
 function Listener.new(priority,id,event)
    local new = {
@@ -34,6 +35,7 @@ end
 ---@field listensers table<number,table<any,function>>
 local eventLib = {}
 eventLib.__index = eventLib
+eventLib.__type = "Event"
 
 ---@return eventLib
 function eventlib.new()

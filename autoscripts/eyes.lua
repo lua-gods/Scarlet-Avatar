@@ -18,7 +18,7 @@ events.TICK:register(function()
    if stare_time >= 0 then
       stare_time = stare_time + 1
    end
-   math.randomseed(world.getTimeOfDay())
+   --math.randomseed(world.getTimeOfDay())
    if stare_time > 1 then
       stare_at = nil
       stare_time = -1
@@ -61,8 +61,8 @@ events.TICK:register(function()
    )
    end
    blink_time = blink_time - 1
+   math.randomseed(math.random())
    if blink_time < 0 then
-      math.randomseed(math.random())
       blink_time = math.lerp(config.fastest_wait,config.longest_wait,math.random())
       animations.sl.blink:play()
       stare_time = 0
