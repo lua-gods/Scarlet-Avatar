@@ -208,7 +208,6 @@ local function new(skull,events)
          pcall(skull.data.current_app_events.EXIT.invoke,skull.data.current_app_events.EXIT)
       end
    end)
-
    skull.data.startup = true
    app_changed = function ()
       skull.data.apps = apps
@@ -227,6 +226,7 @@ local function new(skull,events)
       end
    end
    APPS_CHANGED:register(app_changed)
+   app_changed()
 end
 
 local function reloadApps()
