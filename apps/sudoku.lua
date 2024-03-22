@@ -225,9 +225,15 @@ local function new(gnui,screen,events,skull)
       events.exit()
    end)
 
+   local t = client:getSystemTime()
    newSidebarButton("Reroll").PRESSED:register(function ()
-      sounds:playSound("minecraft:ui.cartography_table.take_result",skull.pos,1,1)
-      fill()
+      if client:getSystemTime() - t < 250 then
+         sounds:playSound("minecraft:ui.cartography_table.take_result",skull.pos,1,1)
+         fill()
+      else
+         sounds:playSound("minecraft:item.axe.strip",skull.pos,1,1)
+      end
+      t = client:getSystemTime()
    end)
 
    local keypad = gnui.newContainer()
@@ -237,8 +243,9 @@ local function new(gnui,screen,events,skull)
    end)
    sidebar:addChild(keypad)
 
+   
    local i = 0
-   for y = 0, 2, 1 do
+   for y = 2, 0, -1 do
       for x = 0, 2, 1 do
          i = i + 1
          local new_button = gnui.newLabel()
