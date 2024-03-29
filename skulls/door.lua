@@ -58,6 +58,11 @@ local function new(skull,events,all_skulls)
 
    skull.data.open = false
 
+   local state = 0
+   local old_state = 0
+   local vel = 0
+   local sound = nil
+
    local invmat = matrices.mat4()
    invmat:rotateY(skull.rot)
    invmat:translate(skull.pos + vectors.vec3(0.5,0.5,0.5) - skull.dir * 0.5)
@@ -77,28 +82,28 @@ local function new(skull,events,all_skulls)
             end
          end
       end
-      if open ~= skull.data.open then
-         skull.data.open = open
-         if open then
-            sounds:playSound("minecraft:block.candle.extinguish",skull.pos,0.5,1)
-            tween.tweenFunction(skull.data.t,1,0.1*true_width,"linear",function (y)
-               skull.model_block.door:pos(vectors.vec3(8,0,8) - skull.dir * y * (size.x + 1) * 15.9)
-               skull.data.t = y
-            end,function ()
-               --sounds:playSound("minecraft:block.note_block.bass",skull.pos,0.5,0.2)
-               --sounds:playSound("minecraft:block.stone.place",skull.pos,0.5,0.5)
-            end,"door"..skull.i)
-         else
-            sounds:playSound("minecraft:block.candle.extinguish",skull.pos,0.5,1)
-            tween.tweenFunction(skull.data.t,0,0.1*true_width,"linear",function (y)
-               skull.model_block.door:pos(vectors.vec3(8,0,8) - skull.dir * y * (size.x + 1) * 15.9)
-               skull.data.t = y
-            end,function ()
-               sounds:playSound("minecraft:block.note_block.bass",skull.pos,1,0.2)
-               --sounds:playSound("minecraft:block.stone.place",skull.pos,0.5,0.5)
-            end,"door"..skull.i)
-         end
+      local s = open and 1 or -1
+      vel = vel * 0.9 + s * 0.05
+      old_state = state
+      state = math.clamp(state + vel, 0, true_width)
+      if (state == true_width or state == 0) and state ~= old_state and math.abs(vel) > 0.1 then
+         sounds:playSound("minecraft:block.note_block.bass",skull.pos,1,0.2)
       end
+      local actualVel = math.abs(state - old_state)
+      if actualVel > 0.05 then
+         if not sound then
+            sound = sounds['item.elytra.flying']
+            sound:pos(skull.pos):loop(true):pitch(0.25):play()
+         end
+         sound:volume(math.min(actualVel, 0.25))
+      elseif sound then
+         sound:stop()
+         sound = nil
+      end
+   end)
+   events.FRAME:register(function(_, delta)
+      local x = math.lerp(old_state, state, delta) / true_width
+      skull.model_block.door:pos(vectors.vec3(8,0,8) - skull.dir * x * (size.x + 1) * 15.9)
    end)
 end
 
