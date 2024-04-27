@@ -83,7 +83,7 @@ local function new(skull,events,all_skulls)
          end
       end
       local s = open and 1 or -1
-      vel = vel * 0.9 + s * 0.05
+      vel = vel * 0.75 + s * 0.15
       old_state = state
       state = math.clamp(state + vel, 0, true_width)
       if (state == true_width or state == 0) and state ~= old_state and math.abs(vel) > 0.1 then
