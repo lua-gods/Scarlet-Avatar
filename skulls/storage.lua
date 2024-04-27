@@ -32,6 +32,16 @@ local adjacent = {
    vectors.vec3(-1,0,0),
 }
 
+local function readJsonText(text)
+   local decoded = parseJson(text)
+   if type(decoded) == 'string' then
+      return decoded
+   elseif type(decoded) == 'table' then
+      return decoded.text or ''
+   end
+   return ''
+end
+
 ---@param skull WorldSkull
 ---@param events SkullEvents
 local function new(skull,events)
@@ -115,7 +125,7 @@ local function new(skull,events)
       particles:newParticle("minecraft:end_rod",mat:apply(data.pos):add(0.5,0.5,0.5))
       local pos = data.pos
       local sign = world.getBlockState(mat:apply(pos)):getEntityData().front_text.messages
-      local line1,line2,line3,line4 = sign[1]:sub(10,-3),sign[2]:sub(10,-3),sign[3]:sub(10,-3),sign[4]:sub(10,-3)
+      local line1,line2,line3,line4 = readJsonText(sign[1]), readJsonText(sign[2]), readJsonText(sign[3]), readJsonText(sign[4])
       local model = model_origin:newPart(pos.x..","..pos.y..","..pos.z..line2..","..line3):pos(pos.x,pos.y,2.5):rot(0,180,0)
       local model_flat = model:newPart("flat")
       local category
