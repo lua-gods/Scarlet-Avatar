@@ -102,7 +102,7 @@ end
 ---@param skull WorldSkull
 local function new(gnui,screen,events,skull)
    local sprite = gnui.newSprite():setTexture(textures["1x1white"])
-   local grid_base = gnui.newContainer():setSprite(sprite:duplicate())
+   local grid_base = gnui.newContainer():setSprite(sprite:copy())
    grid_base:setAnchor(0.5,0,0.5,1)
 
    local sidebar = gnui.newContainer():setAnchor(0,0,0.5,1)

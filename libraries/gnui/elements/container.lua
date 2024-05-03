@@ -28,7 +28,7 @@ local core = require("libraries.gnui.core")
 ---@field ModelPart ModelPart         # The `ModelPart` used to handle where to display debug features and the sprite.
 local container = {}
 container.__index = function (t,i)
-   return container[i] or element[i]
+   return rawget(t,i) or container[i] or element[i]
 end
 container.__type = "GNUI.element.container"
 
@@ -77,8 +77,8 @@ function container.new(preset,force_debug)
       debug_cursor_y   = sprite.new():setModelpart(new.ModelPart):setTexture(debug_texture):setUV(0,0,0,0):setRenderType("EMISSIVE_SOLID"):setSize(1,1):setColor(0,1,0)
    end
 
-   new.VISIBILITY_CHANGED:register(function ()
-      new.DIMENSIONS_CHANGED:invoke()
+   new.VISIBILITY_CHANGED:register(function (v)
+      new.DIMENSIONS_CHANGED:invoke(new.Dimensions)
    end)
    new.DIMENSIONS_CHANGED:register(function ()
       local last_size = new.ContainmentRect.zw - new.ContainmentRect.xy
@@ -114,19 +114,24 @@ function container.new(preset,force_debug)
       end
       for _, child in pairs(new.Children) do
          if child.DIMENSIONS_CHANGED then
-            child.DIMENSIONS_CHANGED:invoke(child.DIMENSIONS_CHANGED)
+            child.DIMENSIONS_CHANGED:invoke(child.Dimensions)
          end
       end
 
       local size = new.ContainmentRect.zw - new.ContainmentRect.xy
       local size_changed = false
-      if last_size ~= new.ContainmentRect.zw - new.ContainmentRect.xy then
+      if last_size ~= size then
          new.SIZE_CHANGED:invoke(size)
          size_changed = true
       end
 
-      local visible = new.Visible and (not new.isClipping) and (not clipping)
-      new.ModelPart:setVisible(visible)
+      local visible = new.cache.final_visible
+      if new.ClipOnParent and visible then
+         if clipping then
+            visible = false
+         end
+      end
+      new.ModelPart:setVisible(new.Visible)
       if visible then
          new.ModelPart
          :setPos(
@@ -193,8 +198,10 @@ function container.new(preset,force_debug)
    end,core.debug_event_name)
 
    new.PARENT_CHANGED:register(function ()
-      if new.Parent then new.ModelPart:moveTo(new.Parent.ModelPart)
-      else new.ModelPart:getParent():removeChild(new.ModelPart)
+      if new.Parent then 
+         new.ModelPart:moveTo(new.Parent.ModelPart)
+      else
+         new.ModelPart:getParent():removeChild(new.ModelPart)
       end
       new.DIMENSIONS_CHANGED:invoke(new.Dimensions)
    end)
@@ -205,17 +212,20 @@ end
 ---note: the object dosent get applied directly, its duplicated and the clone is used instead of the original.
 ---@generic self
 ---@param self self
----@param sprite_obj Sprite
+---@param sprite_obj Sprite?
 ---@return self
 function container:setSprite(sprite_obj)
+   ---@cast self self
    if self.Sprite then
-      self.Sprite:_deleteRenderTasks()
+      self.Sprite:deleteRenderTasks()
       self.Sprite = nil
    end
-   self.Sprite = sprite_obj
-   self.Sprite:setModelpart(self.ModelPart)
-   self.SPRITE_CHANGED:invoke()
+   if sprite_obj then
+      self.Sprite = sprite_obj
+      sprite_obj:setModelpart(self.ModelPart)
+   end
    self.DIMENSIONS_CHANGED:invoke()
+   self.SPRITE_CHANGED:invoke()
    return self
 end
 
@@ -255,15 +265,30 @@ function container:setDimensions(x,y,w,t)
    return self
 end
 
+---@generic self
+---@param self self
+---@overload fun(self : self, vec2 : Vector4): GNUI.container
+---@param x number
+---@param y number?
+---@return self
+function container:offsetDimensions(x,y)
+   ---@cast self GNUI.container
+   local new = utils.figureOutVec2(x,y)
+   self.Dimensions:add(new.x,new.y,new.x,new.y)
+   self.DIMENSIONS_CHANGED:invoke(self.Dimensions)
+   return self
+end
+
 ---Sets the top left offset from the origin anchor of its parent.
 ---@generic self
 ---@param self self
----@param xpos number|Vector2
----@param y number?
+---@overload fun(self : self, vec2 : Vector4): GNUI.container
+---@param x number
+---@param y number
 ---@return self
-function container:setTopLeft(xpos,y)
+function container:setTopLeft(x,y)
    ---@cast self GNUI.container
-   self.Dimensions.xy = utils.figureOutVec2(xpos,y)
+   self.Dimensions.xy = utils.figureOutVec2(x,y)
    self.DIMENSIONS_CHANGED:invoke(self.Dimensions)
    return self
 end
@@ -271,23 +296,25 @@ end
 ---Sets the bottom right offset from the origin anchor of its parent.
 ---@generic self
 ---@param self self
----@param xsize number|Vector2
----@param y number?
+---@overload fun(self : self, vec2 : Vector4): GNUI.container
+---@param x number
+---@param y number
 ---@return self
-function container:setBottomRight(xsize,y)
+function container:setBottomRight(x,y)
    ---@cast self GNUI.container
-   self.Dimensions.zw = utils.figureOutVec2(xsize,y)
+   self.Dimensions.zw = utils.figureOutVec2(x,y)
    self.DIMENSIONS_CHANGED:invoke(self.Dimensions)
    return self
 end
 
 ---Shifts the container based on the top left.
----@param xpos number|Vector2
----@param y number?
+---@overload fun(self : self, vec2 : Vector4): GNUI.container
+---@param x number
+---@param y number
 ---@return self
-function container:offsetTopLeft(xpos,y)
+function container:offsetTopLeft(x,y)
    ---@cast self GNUI.container
-   local old,new = self.Dimensions.xy,utils.figureOutVec2(xpos,y)
+   local old,new = self.Dimensions.xy,utils.figureOutVec2(x,y)
    local delta = new-old
    self.Dimensions.xy,self.Dimensions.zw = new,self.Dimensions.zw - delta
    self.DIMENSIONS_CHANGED:invoke(self.Dimensions)
@@ -295,12 +322,13 @@ function container:offsetTopLeft(xpos,y)
 end
 
 ---Shifts the container based on the bottom right.
----@param zpos number|Vector2
----@param w number?
+---@overload fun(self : self, vec2 : Vector4): GNUI.container
+---@param z number
+---@param w number
 ---@return self
-function container:offsetBottomRight(zpos,w)
+function container:offsetBottomRight(z,w)
    ---@cast self GNUI.container
-   local old,new = self.Dimensions.xy+self.Dimensions.zw,utils.figureOutVec2(zpos,w)
+   local old,new = self.Dimensions.xy+self.Dimensions.zw,utils.figureOutVec2(z,w)
    local delta = new-old
    self.Dimensions.zw = self.Dimensions.zw + delta
    self.DIMENSIONS_CHANGED:invoke(self.Dimensions)
@@ -308,6 +336,7 @@ function container:offsetBottomRight(zpos,w)
 end
 
 ---Checks if the cursor in local coordinates is inside the bounding box of this container.
+---@overload fun(self : self, vec2 : Vector4): boolean
 ---@param x number|Vector2
 ---@param y number?
 ---@return boolean
@@ -323,7 +352,7 @@ end
 
 ---Sets the Cursor position relative to the top left of the container.  
 ---Returns true if the cursor is hovering over the container.  
----@overload fun(vec2 : Vector2, press : boolean?): GNUI.container
+---@overload fun(self: GNUI.container, vec2 : Vector2, press : boolean?): GNUI.container
 ---@overload fun(press : boolean): GNUI.container
 ---@overload fun(): GNUI.container
 ---@param x number?
@@ -396,6 +425,8 @@ end
 
 ---Sets the offset of the depth for this container, a work around to fixing Z fighting issues when two elements overlap.
 ---@param depth number
+---@generic self
+---@param self self
 ---@return self
 function container:setZ(depth)
    ---@cast self GNUI.container
@@ -406,6 +437,8 @@ end
 
 ---If this container should be able to capture the cursor from its parent if obstructed.
 ---@param capture boolean
+---@generic self
+---@param self self
 ---@return self
 function container:setCanCaptureCursor(capture)
    ---@cast self GNUI.container
@@ -445,6 +478,9 @@ end
 --- 0 = top part of the container is fully anchored to the top of its parent  
 --- 1 = top part of the container is fully anchored to the bottom of its parent
 ---@param units number?
+---@generic self
+---@param self self
+---@return self
 function container:setAnchorTop(units)
    ---@cast self GNUI.container
    self.Anchor.y = units or 0
@@ -456,6 +492,9 @@ end
 --- 0 = left part of the container is fully anchored to the left of its parent  
 --- 1 = left part of the container is fully anchored to the right of its parent
 ---@param units number?
+---@generic self
+---@param self self
+---@return self
 function container:setAnchorLeft(units)
    ---@cast self GNUI.container
    self.Anchor.x = units or 0
@@ -467,6 +506,9 @@ end
 --- 0 = bottom part of the container is fully anchored to the top of its parent  
 --- 1 = bottom part of the container is fully anchored to the bottom of its parent
 ---@param units number?
+---@generic self
+---@param self self
+---@return self
 function container:setAnchorDown(units)
    ---@cast self GNUI.container
    self.Anchor.z = units or 0
@@ -478,6 +520,9 @@ end
 --- 0 = right part of the container is fully anchored to the left of its parent  
 --- 1 = right part of the container is fully anchored to the right of its parent  
 ---@param units number?
+---@generic self
+---@param self self
+---@return self
 function container:setAnchorRight(units)
    ---@cast self GNUI.container
    self.Anchor.w = units or 0
@@ -489,11 +534,15 @@ end
 --- x 0 <-> 1 = left <-> right  
 --- y 0 <-> 1 = top <-> bottom  
 ---if right and bottom are not given, they will use left and top instead.
----@overload fun(self : GNUI.container, vec4): GNUI.container
+---@overload fun(self : GNUI.container, xz : Vector2, yw : Vector2): GNUI.container
+---@overload fun(self : GNUI.container, rect : Vector4): GNUI.container
 ---@param left number
 ---@param top number
 ---@param right number?
 ---@param bottom number?
+---@generic self
+---@param self self
+---@return self
 function container:setAnchor(left,top,right,bottom)
    ---@cast self GNUI.container
    self.Anchor = utils.figureOutVec4(left,top,right or left,bottom or top)
