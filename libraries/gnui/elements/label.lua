@@ -269,21 +269,22 @@ function label:_updateRenderTasks()
    local i = 0
    local size = self.ContainmentRect.xy - self.ContainmentRect.zw -- inverted for optimization
    local pos = vectors.vec2(0,self.LineHeight)
+   local scale = self.FontScale * self.AccumulatedScaleFactor
    if #self.TextData == 0 then return self end
    local offset = vectors.vec2(
       0,
-      (size.y / self.FontScale)  * self.Align.y + #self.TextData * self.LineHeight * self.Align.y)
+      (size.y / scale)  * self.Align.y + #self.TextData * self.LineHeight * self.Align.y)
    for _, line in pairs(self.TextData) do
       pos.y = pos.y - self.LineHeight
       pos.x = 0
-      offset.x = (size.x / self.FontScale) * self.Align.x + line.length * self.Align.x
+      offset.x = (size.x / scale) * self.Align.x + line.length * self.Align.x
       for c, component in pairs(line.content) do
          i = i + 1
          local task = self.RenderTasks[i]
-         if (pos.x - component.length > size.x / self.FontScale) or true then
+         if (pos.x - component.length > size.x / scale) or true then
             task
-            :setPos(pos.xy_:add(offset.x,offset.y) * self.FontScale)
-            :setScale(self.FontScale,self.FontScale,self.FontScale)
+            :setPos(pos.xy_:add(offset.x,offset.y) * scale)
+            :setScale(scale,scale,scale)
             :setVisible(true)
          else
             task:setVisible(false)
