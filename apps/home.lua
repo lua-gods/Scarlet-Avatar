@@ -85,8 +85,8 @@ local httpErrors = {
 ---@param screen GNUI.container
 ---@param skull WorldSkull
 local function new(gnui,screen,events,skull)
-   local size = skull.data.tv_size
-   local row_count = math.floor(((size.x * 16) / 24))
+   local size = (screen.ContainmentRect.zw-screen.ContainmentRect.xy) * (1 / screen.AccumulatedScaleFactor)
+   local row_count = math.max(math.floor((size.x / 24)),1)
    events.TICK:register(function ()
    end)
 
@@ -192,7 +192,7 @@ local function new(gnui,screen,events,skull)
    screen:addChild(dateLabel)
    events.TICK:register(function()
       local date = client.getDate()
-      clockLabel:setText(date.hour .. ':' .. string.format('%02d', date.minute))
+      clockLabel:setText((date.hour == 0 and 12 or date.hour) .. ':' .. string.format('%02d', date.minute))
       dateLabel:setText(date.day_name .. ' ' .. date.day .. ' ' .. date.month_name .. ' ' .. date.year)
    end)
 
