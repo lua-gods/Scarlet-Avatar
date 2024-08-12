@@ -66,7 +66,7 @@ local function new(skull,events)
       err_label:setFontScale(0.5)
       err_label:setCanCaptureCursor(false):setAnchor(0,0,1,1)
       skull.data.current_app_screen:addChild(err_label)
-      skull.data.current_app_screen:setSprite(gnui.newSprite():setColor(0,0,0))
+      skull.data.current_app_screen:setSprite(gnui.newSprite():setColor(0,0,0):setRenderType("SOLID"))
       local leave = gnui.newLabel():setText("[Exit]"):setDimensions(-28,-10,0,0)
       leave.PRESSED:register(function ()
          skull.data.setApp(default_app)
@@ -146,7 +146,7 @@ local function new(skull,events)
       end
    end
 
-   local screen_sprite = gnui.newSprite():setTexture(textures["textures.endesga"]):setUV(0,0)
+   local screen_sprite = gnui.newSprite():setTexture(textures["textures.endesga"]):setUV(0,0):setRenderType("EMISSIVE_SOLID")
    screen:setSprite(screen_sprite)
    skull.model_block
    :newPart("screen")

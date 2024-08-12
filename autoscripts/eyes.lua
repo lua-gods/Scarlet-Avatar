@@ -6,8 +6,6 @@ local config = {
    stare_long = 1*20,
 }
 
-vanilla_model.HEAD:setVisible(false)
-
 local blink_time = 0
 local look = vec(0,0)
 
@@ -19,7 +17,7 @@ events.TICK:register(function()
       stare_time = stare_time + 1
    end
    --math.randomseed(world.getTimeOfDay())
-   if stare_time > 1 then
+   if stare_time > 1 and true then
       stare_at = nil
       stare_time = -1
       can_look_at = {}
@@ -67,8 +65,8 @@ events.TICK:register(function()
       animations.sl.blink:play()
       stare_time = 0
    end
-   models.sl.Torso.Hed.eyes.lpupil:setPos(math.clamp(look.x,0,1),0,0)
-   models.sl.Torso.Hed.eyes.rpupil:setPos(math.clamp(look.x,-1,0),0,0)
-   models.sl.Torso.Hed.eyes.lpupil:setUV(0,look.y/128)
-   models.sl.Torso.Hed.eyes.rpupil:setUV(0,look.y/128)
+   --models.sl.Torso.Hed.face.eyes.lpupil:setPos(math.clamp(look.x,0,1),0,0)
+   --models.sl.Torso.Hed.face.eyes.rpupil:setPos(math.clamp(look.x,-1,0),0,0)
+   models.sl.Torso.Hed.Face.Eyes.Pupils.L:setUV(math.clamp(look.x * 0.25,-0.25,0),look.y/128)
+   models.sl.Torso.Hed.Face.Eyes.Pupils.R:setUV(math.clamp(look.x * 0.25,0,0.25),look.y/128)
 end)

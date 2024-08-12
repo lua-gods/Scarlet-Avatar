@@ -57,7 +57,7 @@ end)
 
 local skirt = models.sl.Legs.Skirt
 
-local verts = skirt:getAllVertices().fabric
+local verts = skirt:getAllVertices()["sl.fabric"]
 local swings = {} ---@type table<any,Vertex>
 local swings_ogpos = {} ---@type table<any,Vector3>
 for key, value in pairs(verts) do
@@ -68,7 +68,7 @@ for key, value in pairs(verts) do
    end
 end
 
-models.sl.Torso.Hed.Glass:setPrimaryRenderType("EYES"):setColor(0.4,0.4,0.4)
+models.sl.Torso.Hed.Glasses.Glass:setPrimaryRenderType("EYES"):setColor(0.4,0.4,0.4)
 events.RENDER:register(function (delta, context)
    if not player:isLoaded() then
       return
@@ -90,7 +90,7 @@ events.RENDER:register(function (delta, context)
    mat
    :rotateZ(32)
    :translate(0,-crot.y + math.atan2(crot.z,crot.x) + true_rot.x / 90)
-   models.sl.Torso.Hed.Glass:setUVMatrix(mat)
+   models.sl.Torso.Hed.Glasses.Glass:setUVMatrix(mat)
 
 
    local speed = math.clamp(true_rel_vel.z,-0.5,0.5)
