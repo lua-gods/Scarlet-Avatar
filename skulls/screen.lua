@@ -1,4 +1,4 @@
-local gnui = require("libraries.GNUI")
+local gnui = require("libraries.gnui")
 local eventLib = require("libraries.eventLib")
 local tween = require("libraries.GNTweenLib")
 local APPS_CHANGED = eventLib.new()

@@ -57,7 +57,7 @@ end)
 
 local skirt = models.sl.Legs.Skirt
 
-local verts = skirt:getAllVertices()["sl.fabric"]
+local verts = skirt:getAllVertices()["fabric"]
 local swings = {} ---@type table<any,Vertex>
 local swings_ogpos = {} ---@type table<any,Vector3>
 for key, value in pairs(verts) do
