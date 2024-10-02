@@ -6,15 +6,13 @@ local apps = {}
 local GNUI = require "GNUI.main"
 local Button = require "GNUI.element.button"
 
-local DEFAULT_APP = "system:home"
-
+local DEFAULT_APP = "home"
 
 ---@class TV.app
 ---@field TICK eventLib
 ---@field FRAME eventLib
 ---@field EXIT eventLib
----@field exit function
----@field restart function
+---@field quit function
 
 ---@param rdir Vector3
 ---@param pdir Vector3
@@ -61,7 +59,7 @@ local function new(skull,events)
    for i = 1, 100, 1 do if not isBlock(mat:apply(0,-i,0),b) then break end r.w = r.w + 1 end
 
    local size = vectors.vec2(r.x+r.z+1,r.y+r.w+1)
-   local screen = GNUI.newCanvas(false):setScaleFactor(0.5)
+   local screen = GNUI.newCanvas(false):setScaleFactor(.5)
 
 
    local screenBG = GNUI.newNineslice(textures["textures.endesga"],0,0,0,0)
@@ -81,7 +79,26 @@ local function new(skull,events)
    skull.data.size = size
    
    
-   Button.new(screen):setDimensions(16,16,64,32)
+   local function quit()
+      
+   end
+   
+   local function loadApp(name)
+      local background = GNUI.newNineslice(textures["textures.endesga"],0,0,0,0)
+      local window = GNUI.newBox(screen):setNineslice(background):setAnchor(0,0,1,1)
+      local app = {
+         TICK = eventLib.new(),
+         FRAME = eventLib.new(),
+         EXIT = eventLib.new(),
+         quit = quit,
+         window = window,
+         name = name,
+      }
+      require("apps."..name)(app,window,screen,skull)
+      skull.data.currentApp = app
+   end
+   
+   loadApp(DEFAULT_APP)
    
    -- input processing
    local pressed = false
@@ -112,14 +129,13 @@ local function new(skull,events)
             screen:parseInputEvent("key.mouse.left",1)
          end
       end
-      if client:getViewer():getSwingTime() == 5 then
+      if client:getViewer():getSwingTime() == 3 then
          if pressed then pressed = false
             screen:parseInputEvent("key.mouse.left",0)
          end
       end
    end)
 end
-
 
 ---@param skull WorldSkull
 return function (skull)
