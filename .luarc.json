@@ -19,7 +19,7 @@
     // Modify ignored files
     "ignoreDir": [".**"],     // Directories starting with `.` are ignored.
     "useGitIgnore": true,     // Ignore the same files as Git.
-    "ignoreSubmodules": true, // Git submodules are ignored.
+    "ignoreSubmodules": false, // Git submodules are ignored.
 
     // Include all file schemes
     "supportScheme": ["file", "untitled", "git"],
