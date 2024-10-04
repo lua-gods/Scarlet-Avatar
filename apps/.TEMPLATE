@@ -1,0 +1,10 @@
+local GNUI = require"GNUI.main"
+local Button = require "GNUI.element.button"
+
+---@param app TV.app
+---@param window GNUI.Box
+---@param screen GNUI.Canvas
+---@param TVAPI TVAPI
+---@param skull WorldSkull
+return function (app,window,screen,TVAPI,skull)
+end,vec(2,1)

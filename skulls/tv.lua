@@ -4,7 +4,6 @@ local APPS_CHANGED = eventLib.new()
 local apps = {}
 
 local GNUI = require "GNUI.main"
-local Button = require "GNUI.element.button"
 
 local DEFAULT_APP = "home"
 
@@ -78,25 +77,39 @@ local function new(skull,events)
    )
    skull.data.size = size
    
+   ---@class TVAPI
+   local TVAPI = {}
    
-   local function quit()
-      
-   end
+   local currentApp
    
    local function loadApp(name)
+      if currentApp then
+         currentApp.window:free()
+      end
+      
       local background = GNUI.newNineslice(textures["textures.endesga"],0,0,0,0)
       local window = GNUI.newBox(screen):setNineslice(background):setAnchor(0,0,1,1)
       local app = {
          TICK = eventLib.new(),
          FRAME = eventLib.new(),
          EXIT = eventLib.new(),
-         quit = quit,
          window = window,
          name = name,
       }
-      require("apps."..name)(app,window,screen,skull)
+      require("apps."..name)(app,window,screen,TVAPI,skull)
       skull.data.currentApp = app
+      currentApp = app
    end
+   
+   function TVAPI.quit()
+      loadApp(DEFAULT_APP)
+   end
+   
+   function TVAPI.setApp(name)
+      loadApp(name)
+   end
+   
+   
    
    loadApp(DEFAULT_APP)
    
