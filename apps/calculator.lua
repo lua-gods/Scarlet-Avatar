@@ -13,31 +13,50 @@ local clr2 = "#efdada"
 ---@param skull WorldSkull
 return function (app,window,screen,TVAPI,skull)
   
+  local input = ""
+  local output = GNUI.newBox(window):setAnchor(0,0,1,1/gridSize.y):setTextAlign(1,0.5)
+  
+  local function u()
+    output:setText(input)
+  end
+  
   local actions = {
-    {"<X]",function () end,clr1},
-    {"7",function () end},
-    {"8",function () end},
-    {"9",function () end},
-    {"/",function () end,clr2},
+    {"<X]",function () 
+      input = input:sub(1,-2)
+      u()
+      end,clr1},
+    {"7",function () input = input.."7" u() end},
+    {"8",function () input = input.."8" u() end},
+    {"9",function () input = input.."9" u() end},
+    {"/",function () input = input.."/" u() end,clr2},
     
-    {"CA",function () end,clr1},
-    {"4",function () end},
-    {"5",function () end},
-    {"6",function () end},
-    {"*",function () end,clr2},
+    {"CA",function () input = "" u() end,clr1},
+    {"4",function () input = input.."4" u() end},
+    {"5",function () input = input.."5" u() end},
+    {"6",function () input = input.."6" u() end},
+    {"*",function () input = input.."*" u() end,clr2},
     
-    {"C",function () end,clr1},
-    {"1",function () end},
-    {"2",function () end},
-    {"3",function () end},
-    {"-",function () end,clr2},
+    {"%",function () input = "%" u() end,clr1},
+    {"1",function () input = input.."1" u() end},
+    {"2",function () input = input.."2" u() end},
+    {"3",function () input = input.."3" u() end},
+    {"-",function () input = input.."-" u() end,clr2},
     
     {"x",function () TVAPI.quit() end,clr1},
-    {".",function () end},
-    {"0",function () end},
-    {"=",function () end,clr2},
-    {"+",function () end,clr2},
+    {".",function () input = input.."." u() end},
+    {"0",function () input = input.."0" u() end},
+    {"=",function () 
+      local fun = load("return "..input)
+      local ok,out = pcall(fun)
+      if ok then
+        input = tostring(out)
+        output:setText(input)
+      end
+      end,clr2},
+    {"+",function () input = input.."+" u() end,clr2},
   }
+  
+  
   
   local i = 0
   for y = 1, gridSize.y-1, 1 do
